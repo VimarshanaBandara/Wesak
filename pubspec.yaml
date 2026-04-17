@@ -31,9 +31,37 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+
+  # Firebase core - සියලු Firebase services ට required
+  firebase_core: ^3.13.0
+
+  # Firestore - events database
+  cloud_firestore: ^5.6.9
+
+  # Firebase Auth - user login (Google Sign-In)
+  firebase_auth: ^5.5.2
+
+  # Google Sign-In - Firebase Auth Google provider ට required
+  google_sign_in: ^6.2.2
+
+  # Firebase Storage - photo uploads
+  firebase_storage: ^12.4.5
+
+  # Image picker - gallery/camera ෙකන් photos select කරන්න
+  image_picker: ^1.1.2
+
+  # GPS current location
+  geolocator: ^13.0.2
+
+  # OpenStreetMap - free map tiles, no API key required
+  flutter_map: ^7.0.0
+
+  # LatLng coordinate model used by flutter_map
+  latlong2: ^0.9.1
+
+  # Google Maps - disabled for now, activate in app_config.dart when ready
+  # google_maps_flutter: ^2.5.0
 
 dev_dependencies:
   flutter_test:

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "154039038567",
+    "project_id": "wesak-app",
+    "storage_bucket": "wesak-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:154039038567:android:9d8be2aadc1af12778dac2",
+        "android_client_info": {
+          "package_name": "com.vmmobile.wesak"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "154039038567-9ljcbhut8e35aiajmt6bl5mqu5qt03vq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vmmobile.wesak",
+            "certificate_hash": "1d20652fb270e72ed95a0f2f230bce39e4b9ed01"
+          }
+        },
+        {
+          "client_id": "154039038567-mi6hofulvp85u8fpfjuhagdklkhrsovc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAuk_iyNvsLOQTZSCn_0V3neGNGhOodOp8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "154039038567-mi6hofulvp85u8fpfjuhagdklkhrsovc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
