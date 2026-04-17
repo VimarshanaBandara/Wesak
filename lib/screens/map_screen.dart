@@ -99,13 +99,24 @@ class _MapScreenState extends State<MapScreen> {
                   ))
               .toList();
 
-          return AppConfig.mapProvider.buildMap(
-            initialCenter: const LatLng(7.8731, 80.7718),
-            initialZoom: 8,
-            markers: markers,
-            onMarkerTap: (marker) {
-              _showEventBottomSheet(context, marker, events);
-            },
+          return Stack(
+            children: [
+              AppConfig.mapProvider.buildMap(
+                initialCenter: const LatLng(7.8731, 80.7718),
+                initialZoom: 8,
+                markers: markers,
+                onMarkerTap: (marker) {
+                  _showEventBottomSheet(context, marker, events);
+                },
+              ),
+              // Legend - bottom left corner
+              const Positioned(
+                bottom: 16,
+                left: 16,
+                child: _MapLegend(),
+              ),
+
+            ],
           );
         },
       ),
@@ -221,4 +232,65 @@ class _MapScreenState extends State<MapScreen> {
       ),
     );
   }
+}
+
+/// Map legend - pin colors + categories explain කරනවා
+class _MapLegend extends StatelessWidget {
+  const _MapLegend();
+
+  static const _items = [
+    _LegendItem(color: Color(0xFFE65100), icon: Icons.restaurant,     label: 'Dansal'),
+    _LegendItem(color: Color(0xFF6A1B9A), icon: Icons.account_balance, label: 'Thorana'),
+    _LegendItem(color: Color(0xFFF9A825), icon: Icons.wb_sunny,        label: 'Wesak Kudu'),
+    _LegendItem(color: Color(0xFF1565C0), icon: Icons.music_note,      label: 'Geetha'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: _items
+            .map((item) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: item.color,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(item.icon, color: Colors.white, size: 13),
+                      ),
+                      const SizedBox(width: 7),
+                      Text(
+                        item.label,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                ))
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _LegendItem {
+  final Color color;
+  final IconData icon;
+  final String label;
+  const _LegendItem({required this.color, required this.icon, required this.label});
 }
