@@ -48,6 +48,9 @@ dependencies:
   # Firebase Storage - photo uploads
   firebase_storage: ^12.4.5
 
+  # External app launch - Google Maps navigate කරන්න
+  url_launcher: ^6.3.1
+
   # Image picker - gallery/camera ෙකන් photos select කරන්න
   image_picker: ^1.1.2
 

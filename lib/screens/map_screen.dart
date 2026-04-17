@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../config/app_config.dart';
 import '../models/event_model.dart';
@@ -226,11 +227,41 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ],
 
+            const SizedBox(height: 12),
+
+            // Get Directions button - phone ේ Google Maps app open කරනවා
+            FilledButton.icon(
+              onPressed: () => _openGoogleMaps(event.lat, event.lng, event.name),
+              icon: const Icon(Icons.directions),
+              label: const Text('Get Directions'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(46),
+              ),
+            ),
             const SizedBox(height: 16),
           ],
         ),
       ),
     );
+  }
+
+  /// Phone ේ Google Maps app ෙකන් event location ට directions open කරනවා
+  /// geo: URL scheme use කරනවා - free, no API key
+  Future<void> _openGoogleMaps(double lat, double lng, String label) async {
+    // Google Maps app deep link - label ෙකන් pin name show කරනවා
+    final uri = Uri.parse(
+      'geo:$lat,$lng?q=$lat,$lng(${Uri.encodeComponent(label)})',
+    );
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      // Fallback - browser ෙකන් Google Maps open කරනවා
+      final webUri = Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+      );
+      await launchUrl(webUri, mode: LaunchMode.externalApplication);
+    }
   }
 }
 
