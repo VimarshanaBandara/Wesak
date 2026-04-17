@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 import '../models/event_model.dart';
 import '../services/firestore_service.dart';
 import '../services/storage_service.dart';
+import '../widgets/wesak_app_bar.dart';
 import 'location_picker_screen.dart';
 
 /// Add Event screen - user submit කරන form
@@ -68,7 +69,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Add Event'), centerTitle: true),
+        appBar: const WesakAppBar(title: 'Add Event', showBackButton: true),
         body: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

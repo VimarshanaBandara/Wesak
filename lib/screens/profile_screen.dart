@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
+import '../widgets/wesak_app_bar.dart';
 import '../services/user_service.dart';
 import 'admin/admin_screen.dart';
 
@@ -15,10 +16,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        centerTitle: true,
-      ),
+      appBar: const WesakAppBar(title: 'Profile'),
       // Auth state ට listen කරනවා
       body: StreamBuilder<User?>(
         stream: _auth.authStateChanges,

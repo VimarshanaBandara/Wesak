@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/event_model.dart';
 import '../services/firestore_service.dart';
+import '../widgets/wesak_app_bar.dart';
 
 /// Category filtered event list screen
 /// Home screen category card tap ෙකන් open වෙනවා
@@ -37,10 +38,7 @@ class _EventListScreenState extends State<EventListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.displayName),
-        centerTitle: true,
-      ),
+      appBar: WesakAppBar(title: widget.displayName, showBackButton: true),
       body: StreamBuilder<List<EventModel>>(
         stream: _stream,
         builder: (context, snapshot) {

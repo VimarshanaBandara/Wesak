@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../models/event_model.dart';
 import '../services/firestore_service.dart';
+import '../widgets/wesak_app_bar.dart';
 
 /// My Submissions screen - current user ගේ submitted events
 /// Pending, approved, rejected status badge real-time show කරනවා
@@ -14,7 +15,7 @@ class MySubmissionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('My Submissions'), centerTitle: true),
+      appBar: const WesakAppBar(title: 'My Submissions'),
       // Auth state check - login නැතිනම් prompt show
       body: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/wesak_app_bar.dart';
 import 'event_list_screen.dart';
 
 /// Home screen - welcome banner + event category grid
@@ -9,10 +10,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Wesak 2025'),
-        centerTitle: true,
-      ),
+      appBar: const WesakAppBar(title: 'Wesak 2026'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

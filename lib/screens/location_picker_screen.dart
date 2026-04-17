@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+
+import '../widgets/wesak_app_bar.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -77,9 +79,9 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pick Location'),
-        centerTitle: true,
+      appBar: WesakAppBar(
+        title: 'Pick Location',
+        showBackButton: true,
         actions: [
           // Selected location නෑ නම් button disable
           TextButton(
@@ -88,7 +90,10 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                 : null,
             child: const Text(
               'Confirm',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

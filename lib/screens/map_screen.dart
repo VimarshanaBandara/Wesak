@@ -3,6 +3,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../config/app_config.dart';
+import '../widgets/wesak_app_bar.dart';
 import '../models/event_model.dart';
 import '../services/firestore_service.dart';
 import '../services/map/map_provider.dart';
@@ -31,18 +32,7 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Map'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              // TODO: Category filter bottom sheet
-            },
-          ),
-        ],
-      ),
+      appBar: const WesakAppBar(title: 'Map'),
       // Firestore verified events stream ට listen කරනවා
       body: StreamBuilder<List<EventModel>>(
         stream: _eventsStream,

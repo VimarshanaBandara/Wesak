@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/event_model.dart';
 import '../../services/firestore_service.dart';
+import '../../widgets/wesak_app_bar.dart';
 
 /// Admin Panel - pending events approve/reject කරනවා
 /// Profile screen ේ admin role ෙකදී විතරක් accessible
@@ -13,10 +14,7 @@ class AdminScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin Panel'),
-        centerTitle: true,
-      ),
+      appBar: const WesakAppBar(title: 'Admin Panel', showBackButton: true),
       body: StreamBuilder<List<EventModel>>(
         stream: _firestoreService.getPendingEventsStream(),
         builder: (context, snapshot) {
