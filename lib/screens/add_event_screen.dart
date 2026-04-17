@@ -11,8 +11,6 @@ import '../services/storage_service.dart';
 import '../widgets/wesak_app_bar.dart';
 import 'location_picker_screen.dart';
 
-/// Add Event screen - user submit කරන form
-/// Submit කළාම photos Storage ට upload කරලා Firestore ේ pending ලෙස save වෙනවා
 class AddEventScreen extends StatefulWidget {
   const AddEventScreen({super.key});
 
@@ -32,26 +30,36 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   String? _selectedType;
   LatLng? _selectedLocation;
-
-  // Selected photos list - max 5
   List<XFile> _selectedPhotos = [];
-
   bool _isSubmitting = false;
-  // Upload progress text - "Uploading 1/3..."
   String _submitStatus = '';
 
-  static const List<String> _eventTypes = [
-    'dansal',
-    'thorana',
-    'kudu',
-    'geetha',
-  ];
+  // Wesak colors
+  static const _dark = Color(0xFF1A0533);
+  static const _purple = Color(0xFF6A0080);
+  static const _saffron = Color(0xFFE65100);
 
-  static const Map<String, String> _typeLabels = {
+  static const _eventTypes = ['dansal', 'thorana', 'kudu', 'geetha'];
+
+  static const _typeLabels = {
     'dansal': 'Dansal',
     'thorana': 'Thorana',
     'kudu': 'Wesak Kudu',
     'geetha': 'Bhakthi Geetha',
+  };
+
+  static const _typeIcons = {
+    'dansal': Icons.restaurant,
+    'thorana': Icons.account_balance,
+    'kudu': Icons.light_mode,
+    'geetha': Icons.music_note,
+  };
+
+  static const _typeColors = {
+    'dansal': Color(0xFFBF360C),
+    'thorana': Color(0xFF4A148C),
+    'kudu': Color(0xFFF57F17),
+    'geetha': Color(0xFF0D47A1),
   };
 
   @override
@@ -69,16 +77,32 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
     if (user == null) {
       return Scaffold(
-        appBar: const WesakAppBar(title: 'Add Event', showBackButton: true),
-        body: const Center(
+        backgroundColor: const Color(0xFFFFF8EE),
+        appBar: const WesakAppBar(title: 'Add Event'),
+        body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.lock_outline, size: 64, color: Colors.grey),
-              SizedBox(height: 16),
-              Text('Please sign in to add events'),
-              SizedBox(height: 8),
-              Text(
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: _purple.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.lock_outline, size: 40, color: _purple),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Sign in required',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: _dark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
                 'Go to Profile tab to sign in',
                 style: TextStyle(color: Colors.grey),
               ),
@@ -89,7 +113,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Event'), centerTitle: true),
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: const WesakAppBar(title: 'Add Event'),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -97,133 +122,127 @@ class _AddEventScreenState extends State<AddEventScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Event Type',
-                  style: Theme.of(context).textTheme.labelLarge),
-              const SizedBox(height: 8),
+              // ── Event type selector ──────────────────────────────────
+              _sectionLabel('Event Type'),
+              const SizedBox(height: 10),
               _buildTypeSelector(),
               const SizedBox(height: 20),
 
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Event Name',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.title),
-                ),
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Name is required' : null,
-              ),
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.description),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _cityController,
-                decoration: const InputDecoration(
-                  labelText: 'City',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.location_city),
-                ),
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'City is required' : null,
-              ),
-              const SizedBox(height: 16),
-
-              // Location picker
-              OutlinedButton.icon(
-                onPressed: () async {
-                  final result = await Navigator.push<LatLng>(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const LocationPickerScreen()),
-                  );
-                  if (result != null) {
-                    setState(() => _selectedLocation = result);
-                  }
-                },
-                icon: Icon(
-                  Icons.location_on,
-                  color: _selectedLocation != null ? Colors.green : null,
-                ),
-                label: Text(
-                  _selectedLocation != null
-                      ? 'Location Selected ✓  (${_selectedLocation!.latitude.toStringAsFixed(4)}, ${_selectedLocation!.longitude.toStringAsFixed(4)})'
-                      : 'Pick Location on Map',
-                ),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(50),
-                  side: _selectedLocation != null
-                      ? const BorderSide(color: Colors.green)
-                      : null,
+              // ── Event details ────────────────────────────────────────
+              _sectionLabel('Event Details'),
+              const SizedBox(height: 10),
+              _buildCard(
+                child: Column(
+                  children: [
+                    _buildField(
+                      controller: _nameController,
+                      label: 'Event Name',
+                      icon: Icons.title,
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? 'Name is required' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildField(
+                      controller: _descriptionController,
+                      label: 'Description (optional)',
+                      icon: Icons.description,
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildField(
+                      controller: _cityController,
+                      label: 'City',
+                      icon: Icons.location_city,
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? 'City is required' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildField(
+                      controller: _contactController,
+                      label: 'Contact Number (optional)',
+                      icon: Icons.phone,
+                      keyboardType: TextInputType.phone,
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
-              // Photo picker section
-              Text('Photos (optional)',
-                  style: Theme.of(context).textTheme.labelLarge),
-              const SizedBox(height: 8),
+              // ── Location ─────────────────────────────────────────────
+              _sectionLabel('Location'),
+              const SizedBox(height: 10),
+              _buildLocationButton(),
+              const SizedBox(height: 20),
+
+              // ── Photos ───────────────────────────────────────────────
+              _sectionLabel('Photos (optional)'),
+              const SizedBox(height: 10),
               _buildPhotoSection(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 28),
 
-              TextFormField(
-                controller: _contactController,
-                decoration: const InputDecoration(
-                  labelText: 'Contact Number (optional)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.phone),
-                ),
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 24),
-
-              // Submit button
-              FilledButton.icon(
-                onPressed: _isSubmitting ? null : _submitForm,
-                icon: _isSubmitting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
+              // ── Submit button ────────────────────────────────────────
+              GestureDetector(
+                onTap: _isSubmitting ? null : _submitForm,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: _isSubmitting ? Colors.grey : _dark,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: _isSubmitting
+                        ? []
+                        : [
+                            BoxShadow(
+                              color: _dark.withValues(alpha: 0.35),
+                              blurRadius: 12,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (_isSubmitting)
+                        const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      else
+                        const Icon(Icons.send, color: Colors.white, size: 20),
+                      const SizedBox(width: 10),
+                      Text(
+                        _isSubmitting ? _submitStatus : 'Submit for Review',
+                        style: const TextStyle(
                           color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.3,
                         ),
-                      )
-                    : const Icon(Icons.send),
-                label: Text(_isSubmitting
-                    ? _submitStatus
-                    : 'Submit for Review'),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
+              // Info note
               Row(
                 children: [
-                  Icon(Icons.info_outline,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.secondary),
+                  Icon(Icons.info_outline, size: 14, color: Colors.grey[500]),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       'Your event will be visible after admin approval.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.secondary,
-                          ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -231,12 +250,131 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  /// Photo picker + preview grid
+  // ── Event type chips ────────────────────────────────────────────────────
+  Widget _buildTypeSelector() {
+    return Row(
+      children: _eventTypes.map((type) {
+        final selected = _selectedType == type;
+        final color = _typeColors[type]!;
+        return Expanded(
+          child: GestureDetector(
+            onTap: () => setState(() => _selectedType = type),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              margin: EdgeInsets.only(
+                right: type != _eventTypes.last ? 8 : 0,
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: selected ? color : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: selected ? color : Colors.grey.shade300,
+                  width: selected ? 2 : 1,
+                ),
+                boxShadow: selected
+                    ? [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.35),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        )
+                      ]
+                    : [],
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    _typeIcons[type],
+                    color: selected ? Colors.white : color,
+                    size: 22,
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    _typeLabels[type]!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: selected ? Colors.white : _dark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // ── Location button ─────────────────────────────────────────────────────
+  Widget _buildLocationButton() {
+    final picked = _selectedLocation != null;
+    return GestureDetector(
+      onTap: () async {
+        final result = await Navigator.push<LatLng>(
+          context,
+          MaterialPageRoute(builder: (_) => const LocationPickerScreen()),
+        );
+        if (result != null) setState(() => _selectedLocation = result);
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: picked ? Colors.green : Colors.grey.shade300,
+            width: picked ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: (picked ? Colors.green : _saffron)
+                    .withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.location_on,
+                color: picked ? Colors.green : _saffron,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                picked
+                    ? 'Location Selected ✓  (${_selectedLocation!.latitude.toStringAsFixed(4)}, ${_selectedLocation!.longitude.toStringAsFixed(4)})'
+                    : 'Pick Location on Map',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: picked ? Colors.green : _dark,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: Colors.grey[400],
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Photo section ───────────────────────────────────────────────────────
   Widget _buildPhotoSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Selected photos preview grid
         if (_selectedPhotos.isNotEmpty) ...[
           SizedBox(
             height: 100,
@@ -244,71 +382,59 @@ class _AddEventScreenState extends State<AddEventScreen> {
               scrollDirection: Axis.horizontal,
               itemCount: _selectedPhotos.length,
               separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                return Stack(
-                  children: [
-                    // Local file preview - Image.file ෙකන් directly load
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.file(
-                        File(_selectedPhotos[index].path),
-                        width: 100,
-                        height: 100,
-                        fit: BoxFit.cover,
-                      ),
+              itemBuilder: (context, index) => Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.file(
+                      File(_selectedPhotos[index].path),
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
                     ),
-                    // Remove button
-                    Positioned(
-                      top: 4,
-                      right: 4,
-                      child: GestureDetector(
-                        onTap: () => setState(
-                            () => _selectedPhotos.removeAt(index)),
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.close,
-                              color: Colors.white, size: 14),
+                  ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: GestureDetector(
+                      onTap: () =>
+                          setState(() => _selectedPhotos.removeAt(index)),
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
                         ),
+                        child: const Icon(Icons.close,
+                            color: Colors.white, size: 14),
                       ),
                     ),
-                  ],
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
-
-        // Photo source buttons
-        Row(
-          children: [
-            // Gallery button
-            Expanded(
-              child: OutlinedButton.icon(
-                // Max 5 photos limit
-                onPressed: _selectedPhotos.length >= 5
-                    ? null
-                    : _pickFromGallery,
-                icon: const Icon(Icons.photo_library),
-                label: Text(
-                  _selectedPhotos.isEmpty
-                      ? 'Gallery'
-                      : '${_selectedPhotos.length}/5',
-                ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 8),
-            // Camera button
+          ),
+          const SizedBox(height: 10),
+        ],
+        Row(
+          children: [
             Expanded(
-              child: OutlinedButton.icon(
-                onPressed:
-                    _selectedPhotos.length >= 5 ? null : _capturePhoto,
-                icon: const Icon(Icons.camera_alt),
-                label: const Text('Camera'),
+              child: _photoButton(
+                icon: Icons.photo_library,
+                label: _selectedPhotos.isEmpty
+                    ? 'Gallery'
+                    : '${_selectedPhotos.length}/5',
+                color: _purple,
+                onTap: _selectedPhotos.length >= 5 ? null : _pickFromGallery,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _photoButton(
+                icon: Icons.camera_alt,
+                label: 'Camera',
+                color: _saffron,
+                onTap: _selectedPhotos.length >= 5 ? null : _capturePhoto,
               ),
             ),
           ],
@@ -317,16 +443,125 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  /// Gallery ෙකන් photos select
+  Widget _photoButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback? onTap,
+  }) {
+    final disabled = onTap == null;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 13),
+        decoration: BoxDecoration(
+          color: disabled
+              ? Colors.grey.shade200
+              : color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: disabled ? Colors.grey.shade300 : color.withValues(alpha: 0.4),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon,
+                color: disabled ? Colors.grey : color, size: 18),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: disabled ? Colors.grey : color,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────────────
+  Widget _sectionLabel(String text) {
+    return Text(
+      text.toUpperCase(),
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.bold,
+        color: Colors.grey,
+        letterSpacing: 1.2,
+      ),
+    );
+  }
+
+  Widget _buildCard({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    String? Function(String?)? validator,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+  }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(fontSize: 13),
+        prefixIcon: Icon(icon, size: 20, color: _purple),
+        filled: true,
+        fillColor: const Color(0xFFF8F4FF),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: _purple, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.red),
+        ),
+      ),
+    );
+  }
+
   Future<void> _pickFromGallery() async {
     try {
       final remaining = 5 - _selectedPhotos.length;
       final images = await _storageService.pickImages();
-      // Remaining limit ට trim
       final toAdd = images.take(remaining).toList();
-      if (toAdd.isNotEmpty) {
-        setState(() => _selectedPhotos.addAll(toAdd));
-      }
+      if (toAdd.isNotEmpty) setState(() => _selectedPhotos.addAll(toAdd));
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -335,33 +570,16 @@ class _AddEventScreenState extends State<AddEventScreen> {
     }
   }
 
-  /// Camera ෙකන් photo capture
   Future<void> _capturePhoto() async {
     try {
       final photo = await _storageService.capturePhoto();
-      if (photo != null) {
-        setState(() => _selectedPhotos.add(photo));
-      }
+      if (photo != null) setState(() => _selectedPhotos.add(photo));
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
-  }
-
-  Widget _buildTypeSelector() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: _eventTypes.map((type) {
-        return FilterChip(
-          label: Text(_typeLabels[type] ?? type),
-          selected: _selectedType == type,
-          onSelected: (_) => setState(() => _selectedType = type),
-        );
-      }).toList(),
-    );
   }
 
   Future<void> _submitForm() async {
@@ -371,14 +589,12 @@ class _AddEventScreenState extends State<AddEventScreen> {
       );
       return;
     }
-
     if (_selectedLocation == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please pick a location on the map')),
       );
       return;
     }
-
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -390,15 +606,13 @@ class _AddEventScreenState extends State<AddEventScreen> {
       final user = FirebaseAuth.instance.currentUser!;
       final now = DateTime.now();
 
-      // Photos තිබ්බොත් Storage ට upload කරනවා
       List<String> photoUrls = [];
       if (_selectedPhotos.isNotEmpty) {
         photoUrls = await _storageService.uploadEventPhotos(
           _selectedPhotos,
           onProgress: (uploaded, total) {
             if (mounted) {
-              setState(
-                  () => _submitStatus = 'Uploading $uploaded/$total...');
+              setState(() => _submitStatus = 'Uploading $uploaded/$total...');
             }
           },
         );
