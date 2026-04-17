@@ -40,6 +40,20 @@ class FirestoreService {
     });
   }
 
+  /// Home screen category card ෙකන් - specific type events stream
+  Stream<List<EventModel>> getEventsByTypeStream(String type) {
+    return _events
+        .where('verified', isEqualTo: true)
+        .where('type', isEqualTo: type)
+        .snapshots()
+        .map((snap) {
+      final list =
+          snap.docs.map((doc) => EventModel.fromFirestore(doc)).toList();
+      list.sort((a, b) => a.startTime.compareTo(b.startTime));
+      return list;
+    });
+  }
+
   /// Admin panel ට - pending approval events stream
   Stream<List<EventModel>> getPendingEventsStream() {
     return _events

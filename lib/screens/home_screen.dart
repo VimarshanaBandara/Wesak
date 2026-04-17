@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'event_list_screen.dart';
+
 /// Home screen - welcome banner + event category grid
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -71,12 +73,11 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildCategoryGrid(BuildContext context) {
-    // Event categories with icons and colors
     const categories = [
-      _Category(name: 'Dansal', icon: Icons.restaurant, color: Colors.orange),
-      _Category(name: 'Thorana', icon: Icons.account_balance, color: Colors.purple),
-      _Category(name: 'Wesak Kudu', icon: Icons.wb_sunny, color: Color(0xFFFFB300)),
-      _Category(name: 'Bhakthi Geetha', icon: Icons.music_note, color: Colors.blue),
+      _Category(name: 'Dansal', eventType: 'dansal', icon: Icons.restaurant, color: Colors.orange),
+      _Category(name: 'Thorana', eventType: 'thorana', icon: Icons.account_balance, color: Colors.purple),
+      _Category(name: 'Wesak Kudu', eventType: 'kudu', icon: Icons.wb_sunny, color: Color(0xFFFFB300)),
+      _Category(name: 'Bhakthi Geetha', eventType: 'geetha', icon: Icons.music_note, color: Colors.blue),
     ];
 
     return GridView.count(
@@ -95,7 +96,15 @@ class HomeScreen extends StatelessWidget {
   Widget _buildCategoryCard(BuildContext context, _Category cat) {
     return InkWell(
       onTap: () {
-        // TODO: Navigate to map/list filtered by category type
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => EventListScreen(
+              eventType: cat.eventType,
+              displayName: cat.name,
+            ),
+          ),
+        );
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(
@@ -126,11 +135,13 @@ class HomeScreen extends StatelessWidget {
 /// Category tile data
 class _Category {
   final String name;
+  final String eventType; // Firestore type field value
   final IconData icon;
   final Color color;
 
   const _Category({
     required this.name,
+    required this.eventType,
     required this.icon,
     required this.color,
   });
