@@ -63,6 +63,9 @@ dependencies:
   # LatLng coordinate model used by flutter_map
   latlong2: ^0.9.1
 
+  # Share event - WhatsApp/social media ට share කරන්න
+  share_plus: ^10.1.4
+
   # Google Maps - disabled for now, activate in app_config.dart when ready
   # google_maps_flutter: ^2.5.0
 

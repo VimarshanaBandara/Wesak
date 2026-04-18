@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:url_launcher/url_launcher.dart';
-
 import '../config/app_config.dart';
 import '../widgets/wesak_app_bar.dart';
 import '../models/event_model.dart';
+import 'event_detail_screen.dart';
 import '../services/firestore_service.dart';
 import '../services/map/map_provider.dart';
 
@@ -174,124 +173,16 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  /// Map pin tap → event quick info bottom sheet
+  /// Map pin tap → EventDetailScreen navigate කරනවා
   void _showEventBottomSheet(
     BuildContext context,
     EventMarker marker,
     List<EventModel> events,
   ) {
     final event = events.firstWhere((e) => e.id == marker.id);
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                event.type.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(event.name,
-                style: Theme.of(context).textTheme.titleLarge),
-            if (event.city.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  const Icon(Icons.location_on,
-                      size: 16, color: Colors.grey),
-                  const SizedBox(width: 4),
-                  Text(
-                    event.city,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: Colors.grey),
-                  ),
-                ],
-              ),
-            ],
-            if (event.description.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(event.description),
-            ],
-
-            // Event photos - Firebase Storage URLs
-            if (event.photos.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 100,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: event.photos.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 8),
-                  itemBuilder: (context, i) => ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      event.photos[i],
-                      width: 100,
-                      height: 100,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (_, child, progress) => progress == null
-                          ? child
-                          : Container(
-                              width: 100,
-                              height: 100,
-                              color: Colors.grey[200],
-                              child: const Center(
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 12),
-
-            // Get Directions button - phone ේ Google Maps app open කරනවා
-            FilledButton.icon(
-              onPressed: () => _openGoogleMaps(event.lat, event.lng, event.name),
-              icon: const Icon(Icons.directions),
-              label: const Text('Get Directions'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(46),
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => EventDetailScreen(event: event)),
     );
   }
 
@@ -340,22 +231,6 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Future<void> _openGoogleMaps(double lat, double lng, String label) async {
-    // Google Maps app deep link - label ෙකන් pin name show කරනවා
-    final uri = Uri.parse(
-      'geo:$lat,$lng?q=$lat,$lng(${Uri.encodeComponent(label)})',
-    );
-
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
-      // Fallback - browser ෙකන් Google Maps open කරනවා
-      final webUri = Uri.parse(
-        'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
-      );
-      await launchUrl(webUri, mode: LaunchMode.externalApplication);
-    }
-  }
 }
 
 /// Map legend - pin colors + categories explain කරනවා
