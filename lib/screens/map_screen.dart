@@ -19,9 +19,29 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   final _firestoreService = FirestoreService();
 
-  // Stream initState ේ store කරනවා - build() ෙකදී new stream create වෙන්නේ නෑ
-  // build() ේදී stream call කළොත් rebuild ෙකදී stream restart වෙලා data miss වෙනවා
   late final Stream<List<EventModel>> _eventsStream;
+
+  // null = all types shown
+  String? _filterType;
+
+  static const _typeLabels = {
+    'dansal': 'Dansal',
+    'thorana': 'Thorana',
+    'kudu': 'Wesak Kudu',
+    'geetha': 'Bhakthi Geetha',
+  };
+  static const _typeColors = {
+    'dansal': Color(0xFFE65100),
+    'thorana': Color(0xFF6A1B9A),
+    'kudu': Color(0xFFF9A825),
+    'geetha': Color(0xFF1565C0),
+  };
+  static const _typeIcons = {
+    'dansal': Icons.restaurant,
+    'thorana': Icons.account_balance,
+    'kudu': Icons.light_mode,
+    'geetha': Icons.music_note,
+  };
 
   @override
   void initState() {
@@ -80,8 +100,13 @@ class _MapScreenState extends State<MapScreen> {
             );
           }
 
+          // Filter events by selected type
+          final filtered = _filterType == null
+              ? events
+              : events.where((e) => e.type == _filterType).toList();
+
           // Events → EventMarker list
-          final markers = events
+          final markers = filtered
               .map((e) => EventMarker(
                     id: e.id,
                     title: e.name,
@@ -97,9 +122,44 @@ class _MapScreenState extends State<MapScreen> {
                 initialZoom: 8,
                 markers: markers,
                 onMarkerTap: (marker) {
-                  _showEventBottomSheet(context, marker, events);
+                  _showEventBottomSheet(context, marker, filtered);
                 },
               ),
+
+              // Filter chips - top
+              Positioned(
+                top: 10,
+                left: 10,
+                right: 10,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      // All chip
+                      _buildFilterChip(
+                        label: 'All',
+                        icon: Icons.apps,
+                        color: const Color(0xFF1A0533),
+                        selected: _filterType == null,
+                        onTap: () => setState(() => _filterType = null),
+                      ),
+                      const SizedBox(width: 6),
+                      ..._typeLabels.entries.map((e) => Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: _buildFilterChip(
+                              label: e.value,
+                              icon: _typeIcons[e.key]!,
+                              color: _typeColors[e.key]!,
+                              selected: _filterType == e.key,
+                              onTap: () =>
+                                  setState(() => _filterType = e.key),
+                            ),
+                          )),
+                    ],
+                  ),
+                ),
+              ),
+
               // Legend - bottom left corner
               const Positioned(
                 bottom: 16,
@@ -237,6 +297,49 @@ class _MapScreenState extends State<MapScreen> {
 
   /// Phone ේ Google Maps app ෙකන් event location ට directions open කරනවා
   /// geo: URL scheme use කරනවා - free, no API key
+  Widget _buildFilterChip({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected ? color : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon,
+                size: 14, color: selected ? Colors.white : color),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: selected ? Colors.white : Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _openGoogleMaps(double lat, double lng, String label) async {
     // Google Maps app deep link - label ෙකන් pin name show කරනවා
     final uri = Uri.parse(

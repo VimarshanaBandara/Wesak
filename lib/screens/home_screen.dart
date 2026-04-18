@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../widgets/wesak_app_bar.dart';
 import 'event_list_screen.dart';
+import 'search_screen.dart';
 
 /// Home screen - welcome banner + event category grid
 class HomeScreen extends StatelessWidget {
@@ -12,7 +13,18 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       // Warm cream background - Wesak lantern glow feel
       backgroundColor: const Color(0xFFFFF8EE),
-      appBar: const WesakAppBar(title: 'Wesak 2026'),
+      appBar: WesakAppBar(
+        title: 'Wesak 2026',
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search, color: Colors.white),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SearchScreen()),
+            ),
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
