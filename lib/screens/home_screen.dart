@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../widgets/wesak_app_bar.dart';
 import 'event_list_screen.dart';
+import 'nearby_screen.dart';
 import 'search_screen.dart';
 
 /// Home screen - welcome banner + event category grid
@@ -30,7 +31,7 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildWelcomeBanner(),
+            _buildWelcomeBanner(context),
             const SizedBox(height: 24),
 
             const Padding(
@@ -54,7 +55,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWelcomeBanner() {
+  Widget _buildWelcomeBanner(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
@@ -113,7 +114,14 @@ class HomeScreen extends StatelessWidget {
                 // Badge row
                 Row(
                   children: [
-                    _buildBadge(Icons.location_on, 'Find Nearby'),
+                    GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const NearbyScreen()),
+                      ),
+                      child: _buildBadge(Icons.location_on, 'Find Nearby'),
+                    ),
                     const SizedBox(width: 8),
                     _buildBadge(Icons.verified, 'Verified'),
                   ],

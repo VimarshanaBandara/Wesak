@@ -30,7 +30,7 @@ class EventCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => _showDetail(context),
+        onTap: () => EventCard.showDetail(context, event),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(
@@ -115,7 +115,7 @@ class EventCard extends StatelessWidget {
     );
   }
 
-  void _showDetail(BuildContext context) {
+  static void showDetail(BuildContext context, EventModel event) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
