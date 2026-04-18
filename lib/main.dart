@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
+import 'screens/splash_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/add_event_screen.dart';
 import 'screens/my_submissions_screen.dart';
@@ -37,7 +38,7 @@ class WesakApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const AppShell(),
+      home: const SplashScreen(nextScreen: AppShell()),
     );
   }
 }
