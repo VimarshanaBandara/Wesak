@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../models/event_model.dart';
@@ -27,6 +28,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
   final _descriptionController = TextEditingController();
   final _cityController = TextEditingController();
   final _contactController = TextEditingController();
+  final _foodItemsController = TextEditingController();
 
   String? _selectedType;
   LatLng? _selectedLocation;
@@ -34,7 +36,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
   bool _isSubmitting = false;
   String _submitStatus = '';
 
-  // Wesak colors
+  // Schedule fields
+  DateTime? _startDate;
+  DateTime? _endDate;
+  TimeOfDay? _startTime;
+
   static const _dark = Color(0xFF1A0533);
   static const _purple = Color(0xFF6A0080);
   static const _saffron = Color(0xFFE65100);
@@ -55,6 +61,13 @@ class _AddEventScreenState extends State<AddEventScreen> {
     'geetha': Icons.music_note,
   };
 
+  static const _typeGradients = {
+    'dansal': [Color(0xFFBF360C), Color(0xFFFF6D00)],
+    'thorana': [Color(0xFF4A148C), Color(0xFF7B1FA2)],
+    'kudu': [Color(0xFFF57F17), Color(0xFFFFD600)],
+    'geetha': [Color(0xFF0D47A1), Color(0xFF1976D2)],
+  };
+
   static const _typeColors = {
     'dansal': Color(0xFFBF360C),
     'thorana': Color(0xFF4A148C),
@@ -68,8 +81,68 @@ class _AddEventScreenState extends State<AddEventScreen> {
     _descriptionController.dispose();
     _cityController.dispose();
     _contactController.dispose();
+    _foodItemsController.dispose();
     super.dispose();
   }
+
+  // ── Schedule helpers ────────────────────────────────────────────────────────
+
+  void _clearSchedule() {
+    _startDate = null;
+    _endDate = null;
+    _startTime = null;
+  }
+
+  Future<void> _pickDate({
+    required String title,
+    required void Function(DateTime) onPicked,
+    DateTime? firstDate,
+  }) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: firstDate ?? DateTime.now(),
+      firstDate: firstDate ?? DateTime.now(),
+      lastDate: DateTime(2027),
+      helpText: title,
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: _typeColors[_selectedType] ?? _purple,
+            onPrimary: Colors.white,
+            surface: Colors.white,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) setState(() => onPicked(picked));
+  }
+
+  Future<void> _pickTime({
+    required String title,
+    required void Function(TimeOfDay) onPicked,
+  }) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _startTime ?? TimeOfDay.now(),
+      helpText: title,
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: _typeColors[_selectedType] ?? _purple,
+            onPrimary: Colors.white,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) setState(() => onPicked(picked));
+  }
+
+  String _fmt(DateTime d) => DateFormat('dd MMM yyyy').format(d);
+  String _fmtTime(TimeOfDay t) => t.format(context);
+
+  // ── Build ────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -96,16 +169,13 @@ class _AddEventScreenState extends State<AddEventScreen> {
               const Text(
                 'Sign in required',
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: _dark,
-                ),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: _dark),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Go to Profile tab to sign in',
-                style: TextStyle(color: Colors.grey),
-              ),
+              const Text('Go to Profile tab to sign in',
+                  style: TextStyle(color: Colors.grey)),
             ],
           ),
         ),
@@ -113,194 +183,212 @@ class _AddEventScreenState extends State<AddEventScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: const Color(0xFFF2F2F7),
       appBar: const WesakAppBar(title: 'Add Event'),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Event type selector ──────────────────────────────────
-              _sectionLabel('Event Type'),
-              const SizedBox(height: 10),
-              _buildTypeSelector(),
-              const SizedBox(height: 20),
-
-              // ── Event details ────────────────────────────────────────
-              _sectionLabel('Event Details'),
-              const SizedBox(height: 10),
-              _buildCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeaderBanner(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+              child: Form(
+                key: _formKey,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildField(
-                      controller: _nameController,
-                      label: 'Event Name',
-                      icon: Icons.title,
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? 'Name is required' : null,
-                    ),
+                    // ── Event type ─────────────────────────────────────
+                    _sectionLabel('Choose Event Type'),
                     const SizedBox(height: 12),
-                    _buildField(
-                      controller: _descriptionController,
-                      label: 'Description (optional)',
-                      icon: Icons.description,
-                      maxLines: 3,
-                    ),
+                    _buildTypeGrid(),
+                    const SizedBox(height: 24),
+
+                    // ── Schedule (type-specific) ───────────────────────
+                    if (_selectedType != null) ...[
+                      _sectionLabel('Schedule'),
+                      const SizedBox(height: 12),
+                      _buildScheduleCard(),
+                      const SizedBox(height: 24),
+                    ],
+
+                    // ── Event details ──────────────────────────────────
+                    _sectionLabel('Event Details'),
                     const SizedBox(height: 12),
-                    _buildField(
-                      controller: _cityController,
-                      label: 'City',
-                      icon: Icons.location_city,
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? 'City is required' : null,
-                    ),
+                    _buildDetailsCard(),
+                    const SizedBox(height: 24),
+
+                    // ── Location ───────────────────────────────────────
+                    _sectionLabel('Location'),
                     const SizedBox(height: 12),
-                    _buildField(
-                      controller: _contactController,
-                      label: 'Contact Number (optional)',
-                      icon: Icons.phone,
-                      keyboardType: TextInputType.phone,
+                    _buildLocationButton(),
+                    const SizedBox(height: 24),
+
+                    // ── Photos ─────────────────────────────────────────
+                    _sectionLabel('Photos  (optional, up to 5)'),
+                    const SizedBox(height: 12),
+                    _buildPhotoGrid(),
+                    const SizedBox(height: 30),
+
+                    // ── Submit ─────────────────────────────────────────
+                    _buildSubmitButton(),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(Icons.info_outline,
+                            size: 13, color: Colors.grey[400]),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Your event will be visible after admin approval.',
+                            style: TextStyle(
+                                fontSize: 11, color: Colors.grey[400]),
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 28),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
-
-              // ── Location ─────────────────────────────────────────────
-              _sectionLabel('Location'),
-              const SizedBox(height: 10),
-              _buildLocationButton(),
-              const SizedBox(height: 20),
-
-              // ── Photos ───────────────────────────────────────────────
-              _sectionLabel('Photos (optional)'),
-              const SizedBox(height: 10),
-              _buildPhotoSection(),
-              const SizedBox(height: 28),
-
-              // ── Submit button ────────────────────────────────────────
-              GestureDetector(
-                onTap: _isSubmitting ? null : _submitForm,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: _isSubmitting ? Colors.grey : _dark,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: _isSubmitting
-                        ? []
-                        : [
-                            BoxShadow(
-                              color: _dark.withValues(alpha: 0.35),
-                              blurRadius: 12,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (_isSubmitting)
-                        const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      else
-                        const Icon(Icons.send, color: Colors.white, size: 20),
-                      const SizedBox(width: 10),
-                      Text(
-                        _isSubmitting ? _submitStatus : 'Submit for Review',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-
-              // Info note
-              Row(
-                children: [
-                  Icon(Icons.info_outline, size: 14, color: Colors.grey[500]),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      'Your event will be visible after admin approval.',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // ── Event type chips ────────────────────────────────────────────────────
-  Widget _buildTypeSelector() {
-    return Row(
+  // ── Header ──────────────────────────────────────────────────────────────────
+
+  Widget _buildHeaderBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF1A0533),
+            Color(0xFF6A0080),
+            Color(0xFFBF360C),
+            Color(0xFFE65100),
+          ],
+          stops: [0.0, 0.35, 0.7, 1.0],
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Share Your Event',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Add your Dansal, Thorana or any\nWesak celebration to the map.',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.add_location_alt,
+                color: Colors.white, size: 28),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Type grid ───────────────────────────────────────────────────────────────
+
+  Widget _buildTypeGrid() {
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 2.0,
       children: _eventTypes.map((type) {
         final selected = _selectedType == type;
-        final color = _typeColors[type]!;
-        return Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _selectedType = type),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              margin: EdgeInsets.only(
-                right: type != _eventTypes.last ? 8 : 0,
+        final gradients = _typeGradients[type]!;
+        return GestureDetector(
+          onTap: () => setState(() {
+            _selectedType = type;
+            _clearSchedule();
+          }),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            decoration: BoxDecoration(
+              gradient: selected
+                  ? LinearGradient(
+                      colors: gradients,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              color: selected ? null : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: selected ? Colors.transparent : Colors.grey.shade200,
+                width: 1.5,
               ),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: selected ? color : Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: selected ? color : Colors.grey.shade300,
-                  width: selected ? 2 : 1,
+              boxShadow: [
+                BoxShadow(
+                  color: selected
+                      ? gradients.last.withValues(alpha: 0.4)
+                      : Colors.black.withValues(alpha: 0.05),
+                  blurRadius: selected ? 10 : 4,
+                  offset: const Offset(0, 3),
                 ),
-                boxShadow: selected
-                    ? [
-                        BoxShadow(
-                          color: color.withValues(alpha: 0.35),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        )
-                      ]
-                    : [],
-              ),
-              child: Column(
-                children: [
-                  Icon(
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? Colors.white.withValues(alpha: 0.22)
+                        : gradients.first.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
                     _typeIcons[type],
-                    color: selected ? Colors.white : color,
-                    size: 22,
+                    color: selected ? Colors.white : gradients.first,
+                    size: 20,
                   ),
-                  const SizedBox(height: 5),
-                  Text(
-                    _typeLabels[type]!,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: selected ? Colors.white : _dark,
-                    ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  _typeLabels[type]!,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: selected ? Colors.white : _dark,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         );
@@ -308,7 +396,397 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  // ── Location button ─────────────────────────────────────────────────────
+  // ── Schedule card (type-specific) ───────────────────────────────────────────
+
+  Widget _buildScheduleCard() {
+    final typeColor = _typeColors[_selectedType] ?? _purple;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Section header inside card
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: typeColor.withValues(alpha: 0.07),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.calendar_month, size: 16, color: typeColor),
+                const SizedBox(width: 8),
+                Text(
+                  _scheduleTitle(),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: typeColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: _buildScheduleFields(typeColor),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _scheduleTitle() => switch (_selectedType) {
+        'dansal' => 'Dansal Date, Time & Food',
+        'thorana' => 'Thorana Duration',
+        'kudu' => 'Display Duration',
+        'geetha' => 'Concert Date & Time',
+        _ => 'Schedule',
+      };
+
+  Widget _buildScheduleFields(Color typeColor) {
+    return switch (_selectedType) {
+      'dansal' => _buildDansalSchedule(typeColor),
+      'thorana' => _buildDateRangeSchedule(typeColor),
+      'kudu' => _buildDateRangeSchedule(typeColor),
+      'geetha' => _buildGeethaSchedule(typeColor),
+      _ => const SizedBox.shrink(),
+    };
+  }
+
+  // Dansal: date + time + food items
+  Widget _buildDansalSchedule(Color typeColor) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _dateTile(
+                label: 'Date',
+                value: _startDate != null ? _fmt(_startDate!) : null,
+                icon: Icons.calendar_today,
+                typeColor: typeColor,
+                onTap: () => _pickDate(
+                  title: 'Dansal Date',
+                  onPicked: (d) => _startDate = d,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _timeTile(
+                label: 'Start Time',
+                value: _startTime != null ? _fmtTime(_startTime!) : null,
+                icon: Icons.access_time,
+                typeColor: typeColor,
+                onTap: () => _pickTime(
+                  title: 'Dansal Start Time',
+                  onPicked: (t) => _startTime = t,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Food items field
+        TextFormField(
+          controller: _foodItemsController,
+          maxLines: 2,
+          decoration: InputDecoration(
+            labelText: 'What food will be served?',
+            hintText: 'e.g. Rice, Curry, Kiribath, Tea',
+            labelStyle: TextStyle(fontSize: 13, color: typeColor),
+            hintStyle:
+                TextStyle(fontSize: 12, color: Colors.grey[400]),
+            prefixIcon: Icon(Icons.set_meal, size: 20, color: typeColor),
+            filled: true,
+            fillColor: typeColor.withValues(alpha: 0.05),
+            contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: typeColor, width: 1.5),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Thorana / Kudu: start date + end date
+  Widget _buildDateRangeSchedule(Color typeColor) {
+    return Row(
+      children: [
+        Expanded(
+          child: _dateTile(
+            label: 'Start Date',
+            value: _startDate != null ? _fmt(_startDate!) : null,
+            icon: Icons.calendar_today,
+            typeColor: typeColor,
+            onTap: () => _pickDate(
+              title: 'Start Date',
+              onPicked: (d) {
+                _startDate = d;
+                if (_endDate != null && _endDate!.isBefore(d)) {
+                  _endDate = null;
+                }
+              },
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _dateTile(
+            label: 'End Date',
+            value: _endDate != null ? _fmt(_endDate!) : null,
+            icon: Icons.event_available,
+            typeColor: typeColor,
+            onTap: () => _pickDate(
+              title: 'End Date',
+              firstDate: _startDate ?? DateTime.now(),
+              onPicked: (d) => _endDate = d,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Geetha: date + start time
+  Widget _buildGeethaSchedule(Color typeColor) {
+    return Row(
+      children: [
+        Expanded(
+          child: _dateTile(
+            label: 'Concert Date',
+            value: _startDate != null ? _fmt(_startDate!) : null,
+            icon: Icons.calendar_today,
+            typeColor: typeColor,
+            onTap: () => _pickDate(
+              title: 'Concert Date',
+              onPicked: (d) => _startDate = d,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _timeTile(
+            label: 'Start Time',
+            value: _startTime != null ? _fmtTime(_startTime!) : null,
+            icon: Icons.access_time,
+            typeColor: typeColor,
+            onTap: () => _pickTime(
+              title: 'Concert Start Time',
+              onPicked: (t) => _startTime = t,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Shared tile widgets
+  Widget _dateTile({
+    required String label,
+    required String? value,
+    required IconData icon,
+    required Color typeColor,
+    required VoidCallback onTap,
+  }) {
+    final filled = value != null;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: filled
+              ? typeColor.withValues(alpha: 0.07)
+              : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: filled ? typeColor.withValues(alpha: 0.4) : Colors.grey.shade300,
+            width: filled ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 14, color: filled ? typeColor : Colors.grey),
+                const SizedBox(width: 5),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: filled ? typeColor : Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 5),
+            Text(
+              filled ? value : 'Tap to pick',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight:
+                    filled ? FontWeight.bold : FontWeight.normal,
+                color: filled ? _dark : Colors.grey[400],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _timeTile({
+    required String label,
+    required String? value,
+    required IconData icon,
+    required Color typeColor,
+    required VoidCallback onTap,
+  }) =>
+      _dateTile(
+        label: label,
+        value: value,
+        icon: icon,
+        typeColor: typeColor,
+        onTap: onTap,
+      );
+
+  // ── Details card ─────────────────────────────────────────────────────────────
+
+  Widget _buildDetailsCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildInlineField(
+            controller: _nameController,
+            label: 'Event Name',
+            hint: 'e.g. Wijaya Dansal, Kadawatha',
+            icon: Icons.title,
+            isFirst: true,
+            validator: (v) =>
+                (v == null || v.isEmpty) ? 'Name is required' : null,
+          ),
+          _divider(),
+          _buildInlineField(
+            controller: _cityController,
+            label: 'City',
+            hint: 'e.g. Colombo',
+            icon: Icons.location_city,
+            validator: (v) =>
+                (v == null || v.isEmpty) ? 'City is required' : null,
+          ),
+          _divider(),
+          _buildInlineField(
+            controller: _contactController,
+            label: 'Contact',
+            hint: 'Phone number (optional)',
+            icon: Icons.phone,
+            keyboardType: TextInputType.phone,
+          ),
+          _divider(),
+          _buildInlineField(
+            controller: _descriptionController,
+            label: 'Description',
+            hint: 'Brief description (optional)',
+            icon: Icons.description,
+            maxLines: 3,
+            isLast: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _divider() => Divider(
+        height: 1,
+        indent: 52,
+        color: Colors.grey.shade100,
+      );
+
+  Widget _buildInlineField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    String? Function(String?)? validator,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    bool isFirst = false,
+    bool isLast = false,
+  }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        labelStyle:
+            const TextStyle(fontSize: 13, color: Color(0xFF6A0080)),
+        hintStyle: TextStyle(fontSize: 13, color: Colors.grey[350]),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Icon(icon, size: 20, color: _purple),
+        ),
+        prefixIconConstraints:
+            const BoxConstraints(minWidth: 52, minHeight: 0),
+        filled: false,
+        contentPadding: EdgeInsets.only(
+          left: 0,
+          right: 16,
+          top: isFirst ? 16 : 12,
+          bottom: isLast ? 16 : 12,
+        ),
+        border: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        focusedBorder: InputBorder.none,
+        errorBorder: InputBorder.none,
+        focusedErrorBorder: InputBorder.none,
+        errorStyle: const TextStyle(fontSize: 11),
+      ),
+    );
+  }
+
+  // ── Location ─────────────────────────────────────────────────────────────────
+
   Widget _buildLocationButton() {
     final picked = _selectedLocation != null;
     return GestureDetector(
@@ -321,160 +799,212 @@ class _AddEventScreenState extends State<AddEventScreen> {
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: picked ? Colors.green : Colors.grey.shade300,
-            width: picked ? 1.5 : 1,
+            color:
+                picked ? Colors.green.shade400 : Colors.transparent,
+            width: 1.5,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Row(
           children: [
             Container(
-              width: 38,
-              height: 38,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
-                color: (picked ? Colors.green : _saffron)
-                    .withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
+                gradient: LinearGradient(
+                  colors: picked
+                      ? [Colors.green.shade400, Colors.green.shade600]
+                      : [const Color(0xFFE65100), const Color(0xFFBF360C)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
-                Icons.location_on,
-                color: picked ? Colors.green : _saffron,
+                picked ? Icons.location_on : Icons.add_location_alt,
+                color: Colors.white,
                 size: 20,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
-              child: Text(
-                picked
-                    ? 'Location Selected ✓  (${_selectedLocation!.latitude.toStringAsFixed(4)}, ${_selectedLocation!.longitude.toStringAsFixed(4)})'
-                    : 'Pick Location on Map',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: picked ? Colors.green : _dark,
-                ),
-              ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: Colors.grey[400],
-              size: 20,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Photo section ───────────────────────────────────────────────────────
-  Widget _buildPhotoSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (_selectedPhotos.isNotEmpty) ...[
-          SizedBox(
-            height: 100,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _selectedPhotos.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (context, index) => Stack(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.file(
-                      File(_selectedPhotos[index].path),
-                      width: 100,
-                      height: 100,
-                      fit: BoxFit.cover,
+                  Text(
+                    picked ? 'Location Selected' : 'Pick on Map',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: picked ? Colors.green.shade700 : _dark,
                     ),
                   ),
-                  Positioned(
-                    top: 4,
-                    right: 4,
-                    child: GestureDetector(
-                      onTap: () =>
-                          setState(() => _selectedPhotos.removeAt(index)),
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.close,
-                            color: Colors.white, size: 14),
-                      ),
-                    ),
+                  const SizedBox(height: 2),
+                  Text(
+                    picked
+                        ? '${_selectedLocation!.latitude.toStringAsFixed(5)}, '
+                            '${_selectedLocation!.longitude.toStringAsFixed(5)}'
+                        : 'Tap to open map and drop a pin',
+                    style: TextStyle(
+                        fontSize: 12, color: Colors.grey[500]),
                   ),
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-        ],
-        Row(
-          children: [
-            Expanded(
-              child: _photoButton(
-                icon: Icons.photo_library,
-                label: _selectedPhotos.isEmpty
-                    ? 'Gallery'
-                    : '${_selectedPhotos.length}/5',
-                color: _purple,
-                onTap: _selectedPhotos.length >= 5 ? null : _pickFromGallery,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _photoButton(
-                icon: Icons.camera_alt,
-                label: 'Camera',
-                color: _saffron,
-                onTap: _selectedPhotos.length >= 5 ? null : _capturePhoto,
-              ),
-            ),
+            Icon(Icons.chevron_right, color: Colors.grey[400]),
           ],
         ),
+      ),
+    );
+  }
+
+  // ── Photo grid ───────────────────────────────────────────────────────────────
+
+  Widget _buildPhotoGrid() {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        ..._selectedPhotos.asMap().entries.map((entry) {
+          final index = entry.key;
+          final photo = entry.value;
+          return Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.file(
+                  File(photo.path),
+                  width: 90,
+                  height: 90,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Positioned(
+                top: 4,
+                right: 4,
+                child: GestureDetector(
+                  onTap: () =>
+                      setState(() => _selectedPhotos.removeAt(index)),
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.close,
+                        color: Colors.white, size: 12),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
+        if (_selectedPhotos.length < 5)
+          GestureDetector(
+            onTap: _pickFromGallery,
+            child: _photoTile(Icons.add_photo_alternate, _purple,
+                _selectedPhotos.isEmpty ? 'Add Photo' : '${_selectedPhotos.length}/5'),
+          ),
+        if (_selectedPhotos.length < 5)
+          GestureDetector(
+            onTap: _capturePhoto,
+            child: _photoTile(Icons.camera_alt, _saffron, 'Camera'),
+          ),
       ],
     );
   }
 
-  Widget _photoButton({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback? onTap,
-  }) {
-    final disabled = onTap == null;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 13),
-        decoration: BoxDecoration(
-          color: disabled
-              ? Colors.grey.shade200
-              : color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: disabled ? Colors.grey.shade300 : color.withValues(alpha: 0.4),
+  Widget _photoTile(IconData icon, Color color, String label) {
+    return Container(
+      width: 90,
+      height: 90,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 26),
+          const SizedBox(height: 4),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 11,
+                  color: color,
+                  fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
+  // ── Submit ────────────────────────────────────────────────────────────────────
+
+  Widget _buildSubmitButton() {
+    return GestureDetector(
+      onTap: _isSubmitting ? null : _submitForm,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 17),
+        decoration: BoxDecoration(
+          gradient: _isSubmitting
+              ? null
+              : const LinearGradient(
+                  colors: [Color(0xFF1A0533), Color(0xFF6A0080)],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+          color: _isSubmitting ? Colors.grey.shade300 : null,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: _isSubmitting
+              ? []
+              : [
+                  BoxShadow(
+                    color: _dark.withValues(alpha: 0.4),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon,
-                color: disabled ? Colors.grey : color, size: 18),
-            const SizedBox(width: 6),
+            if (_isSubmitting)
+              const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Colors.white),
+              )
+            else
+              const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
             Text(
-              label,
+              _isSubmitting ? _submitStatus : 'Submit for Review',
               style: TextStyle(
-                color: disabled ? Colors.grey : color,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
+                color: _isSubmitting ? Colors.grey[600] : Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.4,
               ),
             ),
           ],
@@ -483,84 +1013,24 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  // ── Helpers ─────────────────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────────
+
   Widget _sectionLabel(String text) {
     return Text(
       text.toUpperCase(),
       style: const TextStyle(
         fontSize: 11,
         fontWeight: FontWeight.bold,
-        color: Colors.grey,
-        letterSpacing: 1.2,
-      ),
-    );
-  }
-
-  Widget _buildCard({required Widget child}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: child,
-    );
-  }
-
-  Widget _buildField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    String? Function(String?)? validator,
-    int maxLines = 1,
-    TextInputType? keyboardType,
-  }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(fontSize: 13),
-        prefixIcon: Icon(icon, size: 20, color: _purple),
-        filled: true,
-        fillColor: const Color(0xFFF8F4FF),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _purple, width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.red),
-        ),
+        color: Color(0xFF6A0080),
+        letterSpacing: 1.3,
       ),
     );
   }
 
   Future<void> _pickFromGallery() async {
     try {
-      final remaining = 5 - _selectedPhotos.length;
       final images = await _storageService.pickImages();
-      final toAdd = images.take(remaining).toList();
+      final toAdd = images.take(5 - _selectedPhotos.length).toList();
       if (toAdd.isNotEmpty) setState(() => _selectedPhotos.addAll(toAdd));
     } catch (e) {
       if (mounted) {
@@ -582,17 +1052,82 @@ class _AddEventScreenState extends State<AddEventScreen> {
     }
   }
 
+  // ── Validation & submit ───────────────────────────────────────────────────────
+
+  bool _validateSchedule() {
+    switch (_selectedType) {
+      case 'dansal':
+        if (_startDate == null) {
+          _showSnack('Please select the Dansal date');
+          return false;
+        }
+        if (_startTime == null) {
+          _showSnack('Please select the Dansal start time');
+          return false;
+        }
+      case 'thorana':
+        if (_startDate == null) {
+          _showSnack('Please select the Thorana start date');
+          return false;
+        }
+        if (_endDate == null) {
+          _showSnack('Please select the Thorana end date');
+          return false;
+        }
+      case 'kudu':
+        if (_startDate == null) {
+          _showSnack('Please select the display start date');
+          return false;
+        }
+        if (_endDate == null) {
+          _showSnack('Please select the display end date');
+          return false;
+        }
+      case 'geetha':
+        if (_startDate == null) {
+          _showSnack('Please select the concert date');
+          return false;
+        }
+        if (_startTime == null) {
+          _showSnack('Please select the concert start time');
+          return false;
+        }
+    }
+    return true;
+  }
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  DateTime _buildStartDateTime() {
+    final date = _startDate ?? DateTime.now();
+    if (_startTime != null) {
+      return DateTime(
+          date.year, date.month, date.day, _startTime!.hour, _startTime!.minute);
+    }
+    return DateTime(date.year, date.month, date.day);
+  }
+
+  DateTime _buildEndDateTime() {
+    if (_endDate != null) {
+      return DateTime(
+          _endDate!.year, _endDate!.month, _endDate!.day, 23, 59);
+    }
+    // Default: same day end
+    final start = _buildStartDateTime();
+    return start.add(const Duration(hours: 8));
+  }
+
   Future<void> _submitForm() async {
     if (_selectedType == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select an event type')),
-      );
+      _showSnack('Please select an event type');
       return;
     }
+    if (!_validateSchedule()) return;
     if (_selectedLocation == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please pick a location on the map')),
-      );
+      _showSnack('Please pick a location on the map');
       return;
     }
     if (!_formKey.currentState!.validate()) return;
@@ -604,7 +1139,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
     try {
       final user = FirebaseAuth.instance.currentUser!;
-      final now = DateTime.now();
 
       List<String> photoUrls = [];
       if (_selectedPhotos.isNotEmpty) {
@@ -612,7 +1146,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
           _selectedPhotos,
           onProgress: (uploaded, total) {
             if (mounted) {
-              setState(() => _submitStatus = 'Uploading $uploaded/$total...');
+              setState(
+                  () => _submitStatus = 'Uploading $uploaded/$total...');
             }
           },
         );
@@ -626,10 +1161,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
         lat: _selectedLocation!.latitude,
         lng: _selectedLocation!.longitude,
         city: _cityController.text.trim(),
-        startTime: now,
-        endTime: now.add(const Duration(days: 1)),
+        startTime: _buildStartDateTime(),
+        endTime: _buildEndDateTime(),
         photos: photoUrls,
         addedBy: user.uid,
+        foodItems: _foodItemsController.text.trim(),
       );
 
       setState(() => _submitStatus = 'Saving...');
@@ -641,12 +1177,14 @@ class _AddEventScreenState extends State<AddEventScreen> {
         _descriptionController.clear();
         _cityController.clear();
         _contactController.clear();
+        _foodItemsController.clear();
         setState(() {
           _selectedType = null;
           _selectedLocation = null;
           _selectedPhotos = [];
           _isSubmitting = false;
           _submitStatus = '';
+          _clearSchedule();
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -662,9 +1200,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
           _isSubmitting = false;
           _submitStatus = '';
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit: $e')),
-        );
+        _showSnack('Failed to submit: $e');
       }
     }
   }

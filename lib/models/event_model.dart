@@ -17,6 +17,7 @@ class EventModel {
   final bool verified; // Admin approved -> true
   final String status; // pending | approved | rejected
   final String addedBy; // Firebase Auth user UID
+  final String foodItems; // Dansal ෙකදී දෙන ආහාර list (dansal only)
 
   const EventModel({
     required this.id,
@@ -33,6 +34,7 @@ class EventModel {
     this.verified = false,
     this.status = 'pending',
     required this.addedBy,
+    this.foodItems = '',
   });
 
   /// Firestore document snapshot -> EventModel
@@ -54,6 +56,7 @@ class EventModel {
       verified: data['verified'] as bool? ?? false,
       status: data['status'] as String? ?? 'pending',
       addedBy: data['addedBy'] as String? ?? '',
+      foodItems: data['foodItems'] as String? ?? '',
     );
   }
 
@@ -72,6 +75,7 @@ class EventModel {
       'verified': verified,
       'status': status,
       'addedBy': addedBy,
+      'foodItems': foodItems,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }
