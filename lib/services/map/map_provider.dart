@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 /// Abstract map provider interface
@@ -9,6 +10,7 @@ abstract class MapProvider {
     required List<EventMarker> markers,
     required Function(EventMarker) onMarkerTap,
     double initialZoom = 10.0,
+    MapController? mapController,
   });
 }
 

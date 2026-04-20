@@ -29,8 +29,10 @@ class OSMMapProvider implements MapProvider {
     required List<EventMarker> markers,
     required Function(EventMarker) onMarkerTap,
     double initialZoom = 10.0,
+    MapController? mapController,
   }) {
     return FlutterMap(
+      mapController: mapController,
       options: MapOptions(
         initialCenter: initialCenter,
         initialZoom: initialZoom,

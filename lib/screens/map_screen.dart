@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../config/app_config.dart';
 import '../widgets/wesak_app_bar.dart';
@@ -17,11 +21,17 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final _firestoreService = FirestoreService();
+  final _mapController = MapController();
+  final _searchController = TextEditingController();
 
   late final Stream<List<EventModel>> _eventsStream;
 
   // null = all types shown
   String? _filterType;
+
+  // Location search
+  bool _searching = false;
+  String? _searchError;
 
   static const _typeLabels = {
     'dansal': 'Dansal',
@@ -46,6 +56,56 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     _eventsStream = _firestoreService.getVerifiedEventsStream();
+    _searchController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  /// Nominatim (OpenStreetMap) free geocoding — API key නෑ
+  Future<void> _searchLocation(String query) async {
+    if (query.trim().isEmpty) return;
+    setState(() {
+      _searching = true;
+      _searchError = null;
+    });
+
+    try {
+      final encoded = Uri.encodeComponent(query.trim());
+      final client = HttpClient();
+      final req = await client.getUrl(
+        Uri.parse(
+          'https://nominatim.openstreetmap.org/search?q=$encoded&format=json&limit=1&countrycodes=lk',
+        ),
+      );
+      req.headers.set('User-Agent', 'WsakApp/1.0');
+      final res = await req.close();
+      final body = await res.transform(const Utf8Decoder()).join();
+      client.close();
+
+      final results = json.decode(body) as List<dynamic>;
+      if (results.isEmpty) {
+        setState(() {
+          _searchError = 'Location not found';
+          _searching = false;
+        });
+        return;
+      }
+
+      final lat = double.parse(results[0]['lat'] as String);
+      final lng = double.parse(results[0]['lon'] as String);
+      _mapController.move(LatLng(lat, lng), 13.0);
+      setState(() => _searching = false);
+    } catch (_) {
+      setState(() {
+        _searchError = 'Search failed. Check connection.';
+        _searching = false;
+      });
+    }
   }
 
   @override
@@ -78,6 +138,7 @@ class _MapScreenState extends State<MapScreen> {
                   initialZoom: 8,
                   markers: const [],
                   onMarkerTap: (_) {},
+                  mapController: _mapController,
                 ),
                 const Positioned(
                   top: 16,
@@ -123,39 +184,114 @@ class _MapScreenState extends State<MapScreen> {
                 onMarkerTap: (marker) {
                   _showEventBottomSheet(context, marker, filtered);
                 },
+                mapController: _mapController,
               ),
 
-              // Filter chips - top
+              // Top overlay: search bar + filter chips
               Positioned(
                 top: 10,
                 left: 10,
                 right: 10,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      // All chip
-                      _buildFilterChip(
-                        label: 'All',
-                        icon: Icons.apps,
-                        color: const Color(0xFF1A0533),
-                        selected: _filterType == null,
-                        onTap: () => setState(() => _filterType = null),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Search bar
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 6),
-                      ..._typeLabels.entries.map((e) => Padding(
-                            padding: const EdgeInsets.only(right: 6),
-                            child: _buildFilterChip(
-                              label: e.value,
-                              icon: _typeIcons[e.key]!,
-                              color: _typeColors[e.key]!,
-                              selected: _filterType == e.key,
-                              onTap: () =>
-                                  setState(() => _filterType = e.key),
-                            ),
-                          )),
-                    ],
-                  ),
+                      child: TextField(
+                        controller: _searchController,
+                        textInputAction: TextInputAction.search,
+                        onSubmitted: _searchLocation,
+                        style: const TextStyle(fontSize: 14),
+                        decoration: InputDecoration(
+                          hintText: 'Search location...',
+                          hintStyle: TextStyle(fontSize: 13, color: Colors.grey[400]),
+                          prefixIcon: const Icon(Icons.search, size: 20, color: Color(0xFF1A0533)),
+                          suffixIcon: _searching
+                              ? const Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child: SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                )
+                              : _searchController.text.isNotEmpty
+                                  ? GestureDetector(
+                                      onTap: () {
+                                        _searchController.clear();
+                                        setState(() => _searchError = null);
+                                      },
+                                      child: Icon(Icons.close, size: 18, color: Colors.grey[400]),
+                                    )
+                                  : null,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                        ),
+                      ),
+                    ),
+
+                    // Search error
+                    if (_searchError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.red.shade200),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.error_outline, size: 14, color: Colors.red),
+                              const SizedBox(width: 6),
+                              Text(_searchError!, style: const TextStyle(fontSize: 12, color: Colors.red)),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                    const SizedBox(height: 8),
+
+                    // Filter chips
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildFilterChip(
+                            label: 'All',
+                            icon: Icons.apps,
+                            color: const Color(0xFF1A0533),
+                            selected: _filterType == null,
+                            onTap: () => setState(() => _filterType = null),
+                          ),
+                          const SizedBox(width: 6),
+                          ..._typeLabels.entries.map((e) => Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: _buildFilterChip(
+                                  label: e.value,
+                                  icon: _typeIcons[e.key]!,
+                                  color: _typeColors[e.key]!,
+                                  selected: _filterType == e.key,
+                                  onTap: () => setState(() => _filterType = e.key),
+                                ),
+                              )),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
