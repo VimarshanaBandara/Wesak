@@ -13,12 +13,10 @@ class FirestoreService {
   /// Public map/list ට - admin verified events only stream
   /// orderBy Dart side ෙකන් කරනවා - Firestore composite index ඕනේ නෑ
   Stream<List<EventModel>> getVerifiedEventsStream() {
-    return _events
-        .where('verified', isEqualTo: true)
-        .snapshots()
-        .map((snap) {
-      final list =
-          snap.docs.map((doc) => EventModel.fromFirestore(doc)).toList();
+    return _events.where('verified', isEqualTo: true).snapshots().map((snap) {
+      final list = snap.docs
+          .map((doc) => EventModel.fromFirestore(doc))
+          .toList();
       // startTime අනුව sort කරනවා
       list.sort((a, b) => a.startTime.compareTo(b.startTime));
       return list;
@@ -28,12 +26,10 @@ class FirestoreService {
   /// "My Submissions" screen ට - specific user ගේ events stream
   /// Pending + approved + rejected සියල්ලම show කරනවා
   Stream<List<EventModel>> getUserEventsStream(String uid) {
-    return _events
-        .where('addedBy', isEqualTo: uid)
-        .snapshots()
-        .map((snap) {
-      final list =
-          snap.docs.map((doc) => EventModel.fromFirestore(doc)).toList();
+    return _events.where('addedBy', isEqualTo: uid).snapshots().map((snap) {
+      final list = snap.docs
+          .map((doc) => EventModel.fromFirestore(doc))
+          .toList();
       // Newest first - createdAt descending
       list.sort((a, b) => b.startTime.compareTo(a.startTime));
       return list;
@@ -47,21 +43,50 @@ class FirestoreService {
         .where('type', isEqualTo: type)
         .snapshots()
         .map((snap) {
-      final list =
-          snap.docs.map((doc) => EventModel.fromFirestore(doc)).toList();
-      list.sort((a, b) => a.startTime.compareTo(b.startTime));
-      return list;
-    });
+          final list = snap.docs
+              .map((doc) => EventModel.fromFirestore(doc))
+              .toList();
+          list.sort((a, b) => a.startTime.compareTo(b.startTime));
+          return list;
+        });
+  }
+
+  /// Paginated fetch — EventListScreen ෙකදී cost reduce කරන්ෙන්
+  /// [lastDoc] null ිනම් first page, otherwise next page
+  static const pageSize = 10;
+
+  Future<({List<EventModel> events, DocumentSnapshot? lastDoc})>
+  fetchEventsByTypePage(String type, {DocumentSnapshot? lastDoc}) async {
+    // orderBy Firestore ෙකදී ිනෑ — composite index require ිකරනවා
+    // Client-side sort කරනවා ිකෙදෙදනුෙවන්
+    var query = _events
+        .where('verified', isEqualTo: true)
+        .where('type', isEqualTo: type)
+        .limit(pageSize);
+
+    if (lastDoc != null) {
+      query = query.startAfterDocument(lastDoc);
+    }
+
+    final snap = await query.get();
+    final events = snap.docs
+        .map((doc) => EventModel.fromFirestore(doc))
+        .toList();
+    // startTime ෙකන් sort — Firestore ිකෙදෙදන් ිකෙනෙකෙරෙ
+    events.sort((a, b) => a.startTime.compareTo(b.startTime));
+    final newLastDoc = snap.docs.isNotEmpty ? snap.docs.last : null;
+
+    return (events: events, lastDoc: newLastDoc);
   }
 
   /// Admin panel ට - pending approval events stream
   Stream<List<EventModel>> getPendingEventsStream() {
-    return _events
-        .where('status', isEqualTo: 'pending')
-        .snapshots()
-        .map((snap) {
-      final list =
-          snap.docs.map((doc) => EventModel.fromFirestore(doc)).toList();
+    return _events.where('status', isEqualTo: 'pending').snapshots().map((
+      snap,
+    ) {
+      final list = snap.docs
+          .map((doc) => EventModel.fromFirestore(doc))
+          .toList();
       // Newest first
       list.sort((a, b) => b.startTime.compareTo(a.startTime));
       return list;
@@ -76,10 +101,7 @@ class FirestoreService {
 
   /// Admin approve — event public map ේ show කරනවා
   Future<void> approveEvent(String eventId) async {
-    await _events.doc(eventId).update({
-      'status': 'approved',
-      'verified': true,
-    });
+    await _events.doc(eventId).update({'status': 'approved', 'verified': true});
   }
 
   /// Admin reject — reason optional ලෙස save කරනවා
