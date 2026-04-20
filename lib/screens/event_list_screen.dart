@@ -37,6 +37,10 @@ class _EventListScreenState extends State<EventListScreen> {
   bool _initialLoading = true;
   String? _loadError;
 
+  // Search
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+
   // Sort
   _SortMode _sortMode = _SortMode.defaultSort;
   Position? _userPosition;
@@ -76,6 +80,7 @@ class _EventListScreenState extends State<EventListScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -192,12 +197,24 @@ class _EventListScreenState extends State<EventListScreen> {
   }
 
   List<EventModel> get _sorted {
+    List<EventModel> list;
     if (_sortMode == _SortMode.nearMe && _userPosition != null) {
-      final copy = [..._events];
-      copy.sort((a, b) => (_distanceTo(a) ?? 0).compareTo(_distanceTo(b) ?? 0));
-      return copy;
+      list = [..._events];
+      list.sort((a, b) => (_distanceTo(a) ?? 0).compareTo(_distanceTo(b) ?? 0));
+    } else {
+      list = _events;
     }
-    return _events;
+
+    // City/location name search filter
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      list = list
+          .where((e) =>
+              e.city.toLowerCase().contains(q) ||
+              e.name.toLowerCase().contains(q))
+          .toList();
+    }
+    return list;
   }
 
   // ── Build ────────────────────────────────────────────────────────────────────
@@ -273,7 +290,7 @@ class _EventListScreenState extends State<EventListScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F7),
       appBar: WesakAppBar(title: widget.displayName, showBackButton: true),
-      body: events.isEmpty
+      body: _events.isEmpty
           ? _buildEmptyState(gradients, icon)
           : CustomScrollView(
               controller: _scrollController,
@@ -290,6 +307,9 @@ class _EventListScreenState extends State<EventListScreen> {
 
                 // Sort bar
                 SliverToBoxAdapter(child: _buildSortBar(gradients)),
+
+                // Search bar
+                SliverToBoxAdapter(child: _buildSearchBar(gradients)),
 
                 // GPS error
                 if (_gpsError != null)
@@ -329,22 +349,46 @@ class _EventListScreenState extends State<EventListScreen> {
                     ),
                   ),
 
-                // Event cards
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final event = events[index];
-                      final dist = _sortMode == _SortMode.nearMe
-                          ? _distanceTo(event)
-                          : null;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: EventCard(event: event, distanceKm: dist),
-                      );
-                    }, childCount: events.length),
-                  ),
-                ),
+                // Event cards or no-results state
+                events.isEmpty
+                    ? SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 48),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.search_off,
+                                size: 48,
+                                color: Colors.grey[300],
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No results for "$_searchQuery"',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[500],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate((context, index) {
+                            final event = events[index];
+                            final dist = _sortMode == _SortMode.nearMe
+                                ? _distanceTo(event)
+                                : null;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: EventCard(event: event, distanceKm: dist),
+                            );
+                          }, childCount: events.length),
+                        ),
+                      ),
 
                 // Bottom: loading / error / all-loaded indicator
                 SliverToBoxAdapter(
@@ -613,6 +657,49 @@ class _EventListScreenState extends State<EventListScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(List<Color> gradients) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: TextField(
+          controller: _searchController,
+          onChanged: (val) => setState(() => _searchQuery = val.trim()),
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            hintText: 'Search by city or event name...',
+            hintStyle: TextStyle(fontSize: 13, color: Colors.grey[400]),
+            prefixIcon: Icon(Icons.search, color: gradients.first, size: 20),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? GestureDetector(
+                    onTap: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
+                    },
+                    child: Icon(Icons.close, size: 18, color: Colors.grey[400]),
+                  )
+                : null,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 13,
+            ),
+          ),
         ),
       ),
     );
