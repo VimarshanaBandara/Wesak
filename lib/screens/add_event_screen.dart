@@ -751,37 +751,48 @@ class _AddEventScreenState extends State<AddEventScreen> {
     bool isFirst = false,
     bool isLast = false,
   }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        labelStyle:
-            const TextStyle(fontSize: 13, color: Color(0xFF6A0080)),
-        hintStyle: TextStyle(fontSize: 13, color: Colors.grey[350]),
-        prefixIcon: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Icon — vertically padded to align with first text line
+        Padding(
+          padding: EdgeInsets.only(
+            left: 14,
+            right: 14,
+            top: isFirst ? 20 : 16,
+          ),
           child: Icon(icon, size: 20, color: _purple),
         ),
-        prefixIconConstraints:
-            const BoxConstraints(minWidth: 52, minHeight: 0),
-        filled: false,
-        contentPadding: EdgeInsets.only(
-          left: 0,
-          right: 16,
-          top: isFirst ? 16 : 12,
-          bottom: isLast ? 16 : 12,
+        // Field — error text now aligns with label/hint naturally
+        Expanded(
+          child: TextFormField(
+            controller: controller,
+            maxLines: maxLines,
+            keyboardType: keyboardType,
+            validator: validator,
+            decoration: InputDecoration(
+              labelText: label,
+              hintText: hint,
+              labelStyle: const TextStyle(
+                  fontSize: 13, color: Color(0xFF6A0080)),
+              hintStyle:
+                  TextStyle(fontSize: 13, color: Colors.grey[350]),
+              filled: false,
+              contentPadding: EdgeInsets.only(
+                right: 16,
+                top: isFirst ? 16 : 12,
+                bottom: isLast ? 16 : 12,
+              ),
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              errorBorder: InputBorder.none,
+              focusedErrorBorder: InputBorder.none,
+              errorStyle: const TextStyle(fontSize: 11),
+            ),
+          ),
         ),
-        border: InputBorder.none,
-        enabledBorder: InputBorder.none,
-        focusedBorder: InputBorder.none,
-        errorBorder: InputBorder.none,
-        focusedErrorBorder: InputBorder.none,
-        errorStyle: const TextStyle(fontSize: 11),
-      ),
+      ],
     );
   }
 
