@@ -184,12 +184,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F7),
-      appBar: const WesakAppBar(title: 'Add Event'),
+      appBar: const WesakAppBar(title: 'Share Your Event'),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeaderBanner(),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
               child: Form(
@@ -257,65 +256,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  // ── Header ──────────────────────────────────────────────────────────────────
-
-  Widget _buildHeaderBanner() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1A0533),
-            Color(0xFF6A0080),
-            Color(0xFFBF360C),
-            Color(0xFFE65100),
-          ],
-          stops: [0.0, 0.35, 0.7, 1.0],
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Share Your Event',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Add your Dansal, Thorana or any\nWesak celebration to the map.',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 13,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.add_location_alt,
-                color: Colors.white, size: 28),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ── Type grid ───────────────────────────────────────────────────────────────
 

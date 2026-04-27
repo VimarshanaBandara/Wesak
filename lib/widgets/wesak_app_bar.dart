@@ -28,21 +28,8 @@ class WesakAppBar extends StatelessWidget implements PreferredSizeWidget {
       // Logo ට extra width
       leadingWidth: 72,
 
-      // Wesak 5-color Buddhist flag inspired gradient
       flexibleSpace: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1A0533), // Deep violet - left top
-              Color(0xFF6A0080), // Rich purple - mid
-              Color(0xFFBF360C), // Deep saffron - right
-              Color(0xFFE65100), // Saffron orange - bottom right
-            ],
-            stops: [0.0, 0.35, 0.7, 1.0],
-          ),
-        ),
+        color: const Color(0xFF1A0533),
       ),
 
       // Logo left - bigger with minimal padding
