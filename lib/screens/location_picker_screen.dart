@@ -1,45 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:flutter_map/flutter_map.dart';
-
-import '../widgets/wesak_app_bar.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
-/// Map screen ෙකන් location tap කරලා LatLng return කරනවා
-/// Usage: final result = await Navigator.push(context, MaterialPageRoute(
-///   builder: (_) => const LocationPickerScreen()));
+import '../l10n/app_locale.dart';
+import '../widgets/wesak_app_bar.dart';
+
+/// Map ෙකන් location tap කරලා LatLng return කරනවා
 class LocationPickerScreen extends StatefulWidget {
   const LocationPickerScreen({super.key});
 
   @override
-  State<LocationPickerScreen> createState() => _LocationPickerScreenState();
+  State<LocationPickerScreen> createState() =>
+      _LocationPickerScreenState();
 }
 
 class _LocationPickerScreenState extends State<LocationPickerScreen> {
   final MapController _mapController = MapController();
 
-  // User tap කළ location - null නම් තෝරලා නෑ
   LatLng? _selectedLocation;
-
-  // Default center - Sri Lanka
   LatLng _center = const LatLng(7.8731, 80.7718);
   double _zoom = 8.0;
-
   bool _loadingGps = false;
 
   @override
   void initState() {
     super.initState();
-    // Screen open වෙනකොට GPS location ට move කරනවා
     _goToCurrentLocation();
   }
 
-  /// GPS permission check කරලා current location ට map move කරනවා
   Future<void> _goToCurrentLocation() async {
     setState(() => _loadingGps = true);
 
     try {
-      // Permission check
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -47,19 +41,17 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
       if (permission == LocationPermission.deniedForever ||
           permission == LocationPermission.denied) {
-        // Permission නෑ - Sri Lanka default center ෙකන් continue
         setState(() => _loadingGps = false);
         return;
       }
 
-      // Current GPS position get කරනවා
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
       );
 
-      final currentLatLng = LatLng(position.latitude, position.longitude);
+      final currentLatLng =
+          LatLng(position.latitude, position.longitude);
 
       if (mounted) {
         setState(() {
@@ -67,11 +59,9 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           _zoom = 15.0;
           _loadingGps = false;
         });
-        // Map ෙකත් move කරනවා
         _mapController.move(currentLatLng, 15.0);
       }
     } catch (_) {
-      // GPS fail වුණොත් default center use කරනවා
       if (mounted) setState(() => _loadingGps = false);
     }
   }
@@ -80,17 +70,16 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: WesakAppBar(
-        title: 'Pick Location',
+        title: AppLocale.locationTitle.getString(context),
         showBackButton: true,
         actions: [
-          // Selected location නෑ නම් button disable
           TextButton(
             onPressed: _selectedLocation != null
                 ? () => Navigator.pop(context, _selectedLocation)
                 : null,
-            child: const Text(
-              'Confirm',
-              style: TextStyle(
+            child: Text(
+              AppLocale.locationConfirm.getString(context),
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
@@ -100,13 +89,11 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       ),
       body: Stack(
         children: [
-          // OSM map - tap කළ position ෙකන් pin set කරනවා
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
               initialCenter: _center,
               initialZoom: _zoom,
-              // Map tap -> selected location update
               onTap: (_, latLng) {
                 setState(() => _selectedLocation = latLng);
               },
@@ -117,7 +104,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                     'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.vmmobile.wesak',
               ),
-              // Selected pin
               if (_selectedLocation != null)
                 MarkerLayer(
                   markers: [
@@ -136,19 +122,20 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             ],
           ),
 
-          // Top instruction banner
+          // Instruction banner
           Positioned(
             top: 12,
             left: 16,
             right: 16,
             child: Card(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 10),
                 child: Text(
                   _selectedLocation == null
-                      ? 'Tap on the map to select location'
-                      : 'Location selected — tap Confirm to save',
+                      ? AppLocale.locationTapHint.getString(context)
+                      : AppLocale.locationSelectedHint
+                          .getString(context),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: _selectedLocation == null
@@ -161,26 +148,29 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             ),
           ),
 
-          // GPS loading indicator
+          // GPS loading
           if (_loadingGps)
-            const Positioned(
+            Positioned(
               bottom: 100,
               left: 0,
               right: 0,
               child: Center(
                 child: Card(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SizedBox(
+                        const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2),
                         ),
-                        SizedBox(width: 10),
-                        Text('Getting your location...'),
+                        const SizedBox(width: 10),
+                        Text(AppLocale.locationGetting
+                            .getString(context)),
                       ],
                     ),
                   ),
@@ -188,13 +178,13 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
               ),
             ),
 
-          // "My Location" FAB
+          // My Location FAB
           Positioned(
             bottom: 24,
             right: 16,
             child: FloatingActionButton.small(
               onPressed: _goToCurrentLocation,
-              tooltip: 'My Location',
+              tooltip: AppLocale.locationMyLocation.getString(context),
               child: _loadingGps
                   ? const SizedBox(
                       width: 18,

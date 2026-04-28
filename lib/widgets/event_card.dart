@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
+import '../l10n/app_locale.dart';
 import '../models/event_model.dart';
 import '../screens/event_detail_screen.dart';
 
@@ -24,19 +26,12 @@ class EventCard extends StatelessWidget {
     'geetha': [Color(0xFF0D47A1), Color(0xFF1976D2)],
   };
 
-  static const _typeLabels = {
-    'dansal': 'Dansal',
-    'thorana': 'Thorana',
-    'kudu': 'Wesak Kudu',
-    'geetha': 'Bhakthi Geetha',
-  };
-
   @override
   Widget build(BuildContext context) {
     final gradients =
         _typeGradients[event.type] ?? [Colors.grey, Colors.blueGrey];
     final icon = _typeIcons[event.type] ?? Icons.event;
-    final typeLabel = _typeLabels[event.type] ?? event.type;
+    final typeLabel = AppLocale.typeLabel(context, event.type);
     final hasPhoto = event.photos.isNotEmpty;
 
     return GestureDetector(
@@ -81,7 +76,6 @@ class EventCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Name
                     Text(
                       event.name,
                       style: const TextStyle(
@@ -94,15 +88,14 @@ class EventCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 5),
 
-                    // Type chip + city
                     Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
-                            color:
-                                gradients.first.withValues(alpha: 0.1),
+                            color: gradients.first
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -131,7 +124,6 @@ class EventCard extends StatelessWidget {
                       ],
                     ),
 
-                    // Description
                     if (event.description.isNotEmpty) ...[
                       const SizedBox(height: 5),
                       Text(
@@ -143,7 +135,7 @@ class EventCard extends StatelessWidget {
                       ),
                     ],
 
-                    // Distance badge
+                    // Distance badge - localized
                     if (distanceKm != null) ...[
                       const SizedBox(height: 6),
                       Row(
@@ -153,8 +145,12 @@ class EventCard extends StatelessWidget {
                           const SizedBox(width: 3),
                           Text(
                             distanceKm! < 1
-                                ? '${(distanceKm! * 1000).round()} m away'
-                                : '${distanceKm!.toStringAsFixed(1)} km away',
+                                ? context.formatString(
+                                    AppLocale.commonMaway,
+                                    [(distanceKm! * 1000).round()])
+                                : context.formatString(
+                                    AppLocale.commonKmaway,
+                                    [distanceKm!.toStringAsFixed(1)]),
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,

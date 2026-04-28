@@ -2,10 +2,12 @@ import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../l10n/app_locale.dart';
 import '../models/event_model.dart';
 import '../services/firestore_service.dart';
 import '../services/storage_service.dart';
@@ -36,7 +38,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
   bool _isSubmitting = false;
   String _submitStatus = '';
 
-  // Schedule fields
   DateTime? _startDate;
   DateTime? _endDate;
   TimeOfDay? _startTime;
@@ -46,13 +47,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
   static const _saffron = Color(0xFFE65100);
 
   static const _eventTypes = ['dansal', 'thorana', 'kudu', 'geetha'];
-
-  static const _typeLabels = {
-    'dansal': 'Dansal',
-    'thorana': 'Thorana',
-    'kudu': 'Wesak Kudu',
-    'geetha': 'Bhakthi Geetha',
-  };
 
   static const _typeIcons = {
     'dansal': Icons.restaurant,
@@ -84,8 +78,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
     _foodItemsController.dispose();
     super.dispose();
   }
-
-  // ── Schedule helpers ────────────────────────────────────────────────────────
 
   void _clearSchedule() {
     _startDate = null;
@@ -142,8 +134,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
   String _fmt(DateTime d) => DateFormat('dd MMM yyyy').format(d);
   String _fmtTime(TimeOfDay t) => t.format(context);
 
-  // ── Build ────────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -151,7 +141,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
     if (user == null) {
       return Scaffold(
         backgroundColor: const Color(0xFFFFF8EE),
-        appBar: const WesakAppBar(title: 'Add Event'),
+        appBar: WesakAppBar(
+            title: AppLocale.addTitle.getString(context)),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -163,19 +154,22 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   color: _purple.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.lock_outline, size: 40, color: _purple),
+                child:
+                    const Icon(Icons.lock_outline, size: 40, color: _purple),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Sign in required',
-                style: TextStyle(
+              Text(
+                AppLocale.addSignInRequired.getString(context),
+                style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: _dark),
               ),
               const SizedBox(height: 8),
-              const Text('Go to Profile tab to sign in',
-                  style: TextStyle(color: Colors.grey)),
+              Text(
+                AppLocale.addGoToProfile.getString(context),
+                style: const TextStyle(color: Colors.grey),
+              ),
             ],
           ),
         ),
@@ -184,7 +178,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F7),
-      appBar: const WesakAppBar(title: 'Share Your Event'),
+      appBar: WesakAppBar(
+          title: AppLocale.addShareTitle.getString(context)),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,39 +191,37 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Event type ─────────────────────────────────────
-                    _sectionLabel('Choose Event Type'),
+                    _sectionLabel(
+                        AppLocale.addChooseType.getString(context)),
                     const SizedBox(height: 12),
                     _buildTypeGrid(),
                     const SizedBox(height: 24),
 
-                    // ── Schedule (type-specific) ───────────────────────
                     if (_selectedType != null) ...[
-                      _sectionLabel('Schedule'),
+                      _sectionLabel(
+                          AppLocale.addSchedule.getString(context)),
                       const SizedBox(height: 12),
                       _buildScheduleCard(),
                       const SizedBox(height: 24),
                     ],
 
-                    // ── Event details ──────────────────────────────────
-                    _sectionLabel('Event Details'),
+                    _sectionLabel(
+                        AppLocale.addEventDetails.getString(context)),
                     const SizedBox(height: 12),
                     _buildDetailsCard(),
                     const SizedBox(height: 24),
 
-                    // ── Location ───────────────────────────────────────
-                    _sectionLabel('Location'),
+                    _sectionLabel(
+                        AppLocale.addLocation.getString(context)),
                     const SizedBox(height: 12),
                     _buildLocationButton(),
                     const SizedBox(height: 24),
 
-                    // ── Photos ─────────────────────────────────────────
-                    _sectionLabel('Photos  (optional, up to 5)'),
+                    _sectionLabel(AppLocale.addPhotos.getString(context)),
                     const SizedBox(height: 12),
                     _buildPhotoGrid(),
                     const SizedBox(height: 30),
 
-                    // ── Submit ─────────────────────────────────────────
                     _buildSubmitButton(),
                     const SizedBox(height: 12),
                     Row(
@@ -238,7 +231,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            'Your event will be visible after admin approval.',
+                            AppLocale.addApprovalNote
+                                .getString(context),
                             style: TextStyle(
                                 fontSize: 11, color: Colors.grey[400]),
                           ),
@@ -256,8 +250,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-
-  // ── Type grid ───────────────────────────────────────────────────────────────
+  // ── Type grid ──────────────────────────────────────────────────────────────
 
   Widget _buildTypeGrid() {
     return GridView.count(
@@ -288,7 +281,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
               color: selected ? null : Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: selected ? Colors.transparent : Colors.grey.shade200,
+                color: selected
+                    ? Colors.transparent
+                    : Colors.grey.shade200,
                 width: 1.5,
               ),
               boxShadow: [
@@ -321,7 +316,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  _typeLabels[type]!,
+                  AppLocale.typeLabel(context, type),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -336,7 +331,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  // ── Schedule card (type-specific) ───────────────────────────────────────────
+  // ── Schedule card ──────────────────────────────────────────────────────────
 
   Widget _buildScheduleCard() {
     final typeColor = _typeColors[_selectedType] ?? _purple;
@@ -355,7 +350,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
       ),
       child: Column(
         children: [
-          // Section header inside card
           Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -379,7 +373,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
               ],
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.all(16),
             child: _buildScheduleFields(typeColor),
@@ -390,11 +383,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
   }
 
   String _scheduleTitle() => switch (_selectedType) {
-        'dansal' => 'Dansal Date, Time & Food',
-        'thorana' => 'Thorana Duration',
-        'kudu' => 'Display Duration',
-        'geetha' => 'Concert Date & Time',
-        _ => 'Schedule',
+        'dansal' => AppLocale.scheduleDansal.getString(context),
+        'thorana' => AppLocale.scheduleThorana.getString(context),
+        'kudu' => AppLocale.scheduleKudu.getString(context),
+        'geetha' => AppLocale.scheduleGeetha.getString(context),
+        _ => AppLocale.addSchedule.getString(context),
       };
 
   Widget _buildScheduleFields(Color typeColor) {
@@ -407,7 +400,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
     };
   }
 
-  // Dansal: date + time + food items
   Widget _buildDansalSchedule(Color typeColor) {
     return Column(
       children: [
@@ -415,25 +407,25 @@ class _AddEventScreenState extends State<AddEventScreen> {
           children: [
             Expanded(
               child: _dateTile(
-                label: 'Date',
+                label: AppLocale.addDate.getString(context),
                 value: _startDate != null ? _fmt(_startDate!) : null,
                 icon: Icons.calendar_today,
                 typeColor: typeColor,
                 onTap: () => _pickDate(
-                  title: 'Dansal Date',
+                  title: AppLocale.addDate.getString(context),
                   onPicked: (d) => _startDate = d,
                 ),
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: _timeTile(
-                label: 'Start Time',
+              child: _dateTile(
+                label: AppLocale.addStartTime.getString(context),
                 value: _startTime != null ? _fmtTime(_startTime!) : null,
                 icon: Icons.access_time,
                 typeColor: typeColor,
                 onTap: () => _pickTime(
-                  title: 'Dansal Start Time',
+                  title: AppLocale.addStartTime.getString(context),
                   onPicked: (t) => _startTime = t,
                 ),
               ),
@@ -441,17 +433,17 @@ class _AddEventScreenState extends State<AddEventScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        // Food items field
         TextFormField(
           controller: _foodItemsController,
           maxLines: 2,
           decoration: InputDecoration(
-            labelText: 'What food will be served?',
-            hintText: 'e.g. Rice, Curry, Kiribath, Tea',
+            labelText: AppLocale.addFoodLabel.getString(context),
+            hintText: AppLocale.addFoodHint.getString(context),
             labelStyle: TextStyle(fontSize: 13, color: typeColor),
             hintStyle:
                 TextStyle(fontSize: 12, color: Colors.grey[400]),
-            prefixIcon: Icon(Icons.set_meal, size: 20, color: typeColor),
+            prefixIcon:
+                Icon(Icons.set_meal, size: 20, color: typeColor),
             filled: true,
             fillColor: typeColor.withValues(alpha: 0.05),
             contentPadding: const EdgeInsets.symmetric(
@@ -474,18 +466,17 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  // Thorana / Kudu: start date + end date
   Widget _buildDateRangeSchedule(Color typeColor) {
     return Row(
       children: [
         Expanded(
           child: _dateTile(
-            label: 'Start Date',
+            label: AppLocale.addStartDate.getString(context),
             value: _startDate != null ? _fmt(_startDate!) : null,
             icon: Icons.calendar_today,
             typeColor: typeColor,
             onTap: () => _pickDate(
-              title: 'Start Date',
+              title: AppLocale.addStartDate.getString(context),
               onPicked: (d) {
                 _startDate = d;
                 if (_endDate != null && _endDate!.isBefore(d)) {
@@ -498,12 +489,12 @@ class _AddEventScreenState extends State<AddEventScreen> {
         const SizedBox(width: 10),
         Expanded(
           child: _dateTile(
-            label: 'End Date',
+            label: AppLocale.addEndDate.getString(context),
             value: _endDate != null ? _fmt(_endDate!) : null,
             icon: Icons.event_available,
             typeColor: typeColor,
             onTap: () => _pickDate(
-              title: 'End Date',
+              title: AppLocale.addEndDate.getString(context),
               firstDate: _startDate ?? DateTime.now(),
               onPicked: (d) => _endDate = d,
             ),
@@ -513,31 +504,30 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  // Geetha: date + start time
   Widget _buildGeethaSchedule(Color typeColor) {
     return Row(
       children: [
         Expanded(
           child: _dateTile(
-            label: 'Concert Date',
+            label: AppLocale.addConcertDate.getString(context),
             value: _startDate != null ? _fmt(_startDate!) : null,
             icon: Icons.calendar_today,
             typeColor: typeColor,
             onTap: () => _pickDate(
-              title: 'Concert Date',
+              title: AppLocale.addConcertDate.getString(context),
               onPicked: (d) => _startDate = d,
             ),
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _timeTile(
-            label: 'Start Time',
+          child: _dateTile(
+            label: AppLocale.addStartTime.getString(context),
             value: _startTime != null ? _fmtTime(_startTime!) : null,
             icon: Icons.access_time,
             typeColor: typeColor,
             onTap: () => _pickTime(
-              title: 'Concert Start Time',
+              title: AppLocale.addStartTime.getString(context),
               onPicked: (t) => _startTime = t,
             ),
           ),
@@ -546,7 +536,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  // Shared tile widgets
   Widget _dateTile({
     required String label,
     required String? value,
@@ -565,7 +554,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
               : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: filled ? typeColor.withValues(alpha: 0.4) : Colors.grey.shade300,
+            color: filled
+                ? typeColor.withValues(alpha: 0.4)
+                : Colors.grey.shade300,
             width: filled ? 1.5 : 1,
           ),
         ),
@@ -574,7 +565,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
           children: [
             Row(
               children: [
-                Icon(icon, size: 14, color: filled ? typeColor : Colors.grey),
+                Icon(icon,
+                    size: 14,
+                    color: filled ? typeColor : Colors.grey),
                 const SizedBox(width: 5),
                 Text(
                   label,
@@ -588,7 +581,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
             ),
             const SizedBox(height: 5),
             Text(
-              filled ? value : 'Tap to pick',
+              filled
+                  ? value
+                  : AppLocale.addTapToPick.getString(context),
               style: TextStyle(
                 fontSize: 13,
                 fontWeight:
@@ -602,22 +597,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  Widget _timeTile({
-    required String label,
-    required String? value,
-    required IconData icon,
-    required Color typeColor,
-    required VoidCallback onTap,
-  }) =>
-      _dateTile(
-        label: label,
-        value: value,
-        icon: icon,
-        typeColor: typeColor,
-        onTap: onTap,
-      );
-
-  // ── Details card ─────────────────────────────────────────────────────────────
+  // ── Details card ───────────────────────────────────────────────────────────
 
   Widget _buildDetailsCard() {
     return Container(
@@ -636,35 +616,37 @@ class _AddEventScreenState extends State<AddEventScreen> {
         children: [
           _buildInlineField(
             controller: _nameController,
-            label: 'Event Name',
-            hint: 'e.g. Wijaya Dansal, Kadawatha',
+            label: AppLocale.addEventName.getString(context),
+            hint: AppLocale.addEventNameHint.getString(context),
             icon: Icons.title,
             isFirst: true,
-            validator: (v) =>
-                (v == null || v.isEmpty) ? 'Name is required' : null,
+            validator: (v) => (v == null || v.isEmpty)
+                ? AppLocale.addNameRequired.getString(context)
+                : null,
           ),
           _divider(),
           _buildInlineField(
             controller: _cityController,
-            label: 'City',
-            hint: 'e.g. Colombo',
+            label: AppLocale.addCity.getString(context),
+            hint: AppLocale.addCityHint.getString(context),
             icon: Icons.location_city,
-            validator: (v) =>
-                (v == null || v.isEmpty) ? 'City is required' : null,
+            validator: (v) => (v == null || v.isEmpty)
+                ? AppLocale.addCityRequired.getString(context)
+                : null,
           ),
           _divider(),
           _buildInlineField(
             controller: _contactController,
-            label: 'Contact',
-            hint: 'Phone number (optional)',
+            label: AppLocale.addContact.getString(context),
+            hint: AppLocale.addContactHint.getString(context),
             icon: Icons.phone,
             keyboardType: TextInputType.phone,
           ),
           _divider(),
           _buildInlineField(
             controller: _descriptionController,
-            label: 'Description',
-            hint: 'Brief description (optional)',
+            label: AppLocale.addDescription.getString(context),
+            hint: AppLocale.addDescriptionHint.getString(context),
             icon: Icons.description,
             maxLines: 3,
             isLast: true,
@@ -694,7 +676,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Icon — vertically padded to align with first text line
         Padding(
           padding: EdgeInsets.only(
             left: 14,
@@ -703,7 +684,6 @@ class _AddEventScreenState extends State<AddEventScreen> {
           ),
           child: Icon(icon, size: 20, color: _purple),
         ),
-        // Field — error text now aligns with label/hint naturally
         Expanded(
           child: TextFormField(
             controller: controller,
@@ -736,7 +716,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  // ── Location ─────────────────────────────────────────────────────────────────
+  // ── Location ───────────────────────────────────────────────────────────────
 
   Widget _buildLocationButton() {
     final picked = _selectedLocation != null;
@@ -744,19 +724,22 @@ class _AddEventScreenState extends State<AddEventScreen> {
       onTap: () async {
         final result = await Navigator.push<LatLng>(
           context,
-          MaterialPageRoute(builder: (_) => const LocationPickerScreen()),
+          MaterialPageRoute(
+              builder: (_) => const LocationPickerScreen()),
         );
         if (result != null) setState(() => _selectedLocation = result);
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color:
-                picked ? Colors.green.shade400 : Colors.transparent,
+            color: picked
+                ? Colors.green.shade400
+                : Colors.transparent,
             width: 1.5,
           ),
           boxShadow: [
@@ -775,8 +758,14 @@ class _AddEventScreenState extends State<AddEventScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: picked
-                      ? [Colors.green.shade400, Colors.green.shade600]
-                      : [const Color(0xFFE65100), const Color(0xFFBF360C)],
+                      ? [
+                          Colors.green.shade400,
+                          Colors.green.shade600
+                        ]
+                      : [
+                          const Color(0xFFE65100),
+                          const Color(0xFFBF360C)
+                        ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -794,11 +783,15 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    picked ? 'Location Selected' : 'Pick on Map',
+                    picked
+                        ? AppLocale.addLocationSelected.getString(context)
+                        : AppLocale.addPickOnMap.getString(context),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: picked ? Colors.green.shade700 : _dark,
+                      color: picked
+                          ? Colors.green.shade700
+                          : _dark,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -806,7 +799,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     picked
                         ? '${_selectedLocation!.latitude.toStringAsFixed(5)}, '
                             '${_selectedLocation!.longitude.toStringAsFixed(5)}'
-                        : 'Tap to open map and drop a pin',
+                        : AppLocale.addTapMap.getString(context),
                     style: TextStyle(
                         fontSize: 12, color: Colors.grey[500]),
                   ),
@@ -820,7 +813,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  // ── Photo grid ───────────────────────────────────────────────────────────────
+  // ── Photo grid ─────────────────────────────────────────────────────────────
 
   Widget _buildPhotoGrid() {
     return Wrap(
@@ -845,8 +838,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 top: 4,
                 right: 4,
                 child: GestureDetector(
-                  onTap: () =>
-                      setState(() => _selectedPhotos.removeAt(index)),
+                  onTap: () => setState(
+                      () => _selectedPhotos.removeAt(index)),
                   child: Container(
                     padding: const EdgeInsets.all(3),
                     decoration: const BoxDecoration(
@@ -864,13 +857,22 @@ class _AddEventScreenState extends State<AddEventScreen> {
         if (_selectedPhotos.length < 5)
           GestureDetector(
             onTap: _pickFromGallery,
-            child: _photoTile(Icons.add_photo_alternate, _purple,
-                _selectedPhotos.isEmpty ? 'Add Photo' : '${_selectedPhotos.length}/5'),
+            child: _photoTile(
+              Icons.add_photo_alternate,
+              _purple,
+              _selectedPhotos.isEmpty
+                  ? AppLocale.addPhoto.getString(context)
+                  : '${_selectedPhotos.length}/5',
+            ),
           ),
         if (_selectedPhotos.length < 5)
           GestureDetector(
             onTap: _capturePhoto,
-            child: _photoTile(Icons.camera_alt, _saffron, 'Camera'),
+            child: _photoTile(
+              Icons.camera_alt,
+              _saffron,
+              AppLocale.addCamera.getString(context),
+            ),
           ),
       ],
     );
@@ -883,7 +885,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
+        border: Border.all(
+            color: color.withValues(alpha: 0.3), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -907,7 +910,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  // ── Submit ────────────────────────────────────────────────────────────────────
+  // ── Submit ─────────────────────────────────────────────────────────────────
 
   Widget _buildSubmitButton() {
     return GestureDetector(
@@ -947,10 +950,13 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     strokeWidth: 2, color: Colors.white),
               )
             else
-              const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+              const Icon(Icons.send_rounded,
+                  color: Colors.white, size: 20),
             const SizedBox(width: 10),
             Text(
-              _isSubmitting ? _submitStatus : 'Submit for Review',
+              _isSubmitting
+                  ? _submitStatus
+                  : AppLocale.addSubmit.getString(context),
               style: TextStyle(
                 color: _isSubmitting ? Colors.grey[600] : Colors.white,
                 fontSize: 15,
@@ -964,7 +970,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────────
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
   Widget _sectionLabel(String text) {
     return Text(
@@ -981,8 +987,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
   Future<void> _pickFromGallery() async {
     try {
       final images = await _storageService.pickImages();
-      final toAdd = images.take(5 - _selectedPhotos.length).toList();
-      if (toAdd.isNotEmpty) setState(() => _selectedPhotos.addAll(toAdd));
+      final toAdd =
+          images.take(5 - _selectedPhotos.length).toList();
+      if (toAdd.isNotEmpty) {
+        setState(() => _selectedPhotos.addAll(toAdd));
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -1003,44 +1012,44 @@ class _AddEventScreenState extends State<AddEventScreen> {
     }
   }
 
-  // ── Validation & submit ───────────────────────────────────────────────────────
+  // ── Validation & submit ────────────────────────────────────────────────────
 
   bool _validateSchedule() {
     switch (_selectedType) {
       case 'dansal':
         if (_startDate == null) {
-          _showSnack('Please select the Dansal date');
+          _showSnack(AppLocale.validateDansalDate.getString(context));
           return false;
         }
         if (_startTime == null) {
-          _showSnack('Please select the Dansal start time');
+          _showSnack(AppLocale.validateDansalTime.getString(context));
           return false;
         }
       case 'thorana':
         if (_startDate == null) {
-          _showSnack('Please select the Thorana start date');
+          _showSnack(AppLocale.validateThoranaStart.getString(context));
           return false;
         }
         if (_endDate == null) {
-          _showSnack('Please select the Thorana end date');
+          _showSnack(AppLocale.validateThoranaEnd.getString(context));
           return false;
         }
       case 'kudu':
         if (_startDate == null) {
-          _showSnack('Please select the display start date');
+          _showSnack(AppLocale.validateKuduStart.getString(context));
           return false;
         }
         if (_endDate == null) {
-          _showSnack('Please select the display end date');
+          _showSnack(AppLocale.validateKuduEnd.getString(context));
           return false;
         }
       case 'geetha':
         if (_startDate == null) {
-          _showSnack('Please select the concert date');
+          _showSnack(AppLocale.validateGeethaDate.getString(context));
           return false;
         }
         if (_startTime == null) {
-          _showSnack('Please select the concert start time');
+          _showSnack(AppLocale.validateGeethaTime.getString(context));
           return false;
         }
     }
@@ -1055,8 +1064,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
   DateTime _buildStartDateTime() {
     final date = _startDate ?? DateTime.now();
     if (_startTime != null) {
-      return DateTime(
-          date.year, date.month, date.day, _startTime!.hour, _startTime!.minute);
+      return DateTime(date.year, date.month, date.day,
+          _startTime!.hour, _startTime!.minute);
     }
     return DateTime(date.year, date.month, date.day);
   }
@@ -1066,26 +1075,25 @@ class _AddEventScreenState extends State<AddEventScreen> {
       return DateTime(
           _endDate!.year, _endDate!.month, _endDate!.day, 23, 59);
     }
-    // Default: same day end
     final start = _buildStartDateTime();
     return start.add(const Duration(hours: 8));
   }
 
   Future<void> _submitForm() async {
     if (_selectedType == null) {
-      _showSnack('Please select an event type');
+      _showSnack(AppLocale.addSelectType.getString(context));
       return;
     }
     if (!_validateSchedule()) return;
     if (_selectedLocation == null) {
-      _showSnack('Please pick a location on the map');
+      _showSnack(AppLocale.addPickLocation.getString(context));
       return;
     }
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       _isSubmitting = true;
-      _submitStatus = 'Submitting...';
+      _submitStatus = AppLocale.addSubmitting.getString(context);
     });
 
     try {
@@ -1097,8 +1105,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
           _selectedPhotos,
           onProgress: (uploaded, total) {
             if (mounted) {
-              setState(
-                  () => _submitStatus = 'Uploading $uploaded/$total...');
+              setState(() => _submitStatus = context.formatString(
+                  AppLocale.addUploading, [uploaded, total]));
             }
           },
         );
@@ -1119,7 +1127,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
         foodItems: _foodItemsController.text.trim(),
       );
 
-      setState(() => _submitStatus = 'Saving...');
+      setState(
+          () => _submitStatus = AppLocale.addSaving.getString(context));
       await _firestoreService.addEvent(event);
 
       if (mounted) {
@@ -1139,8 +1148,9 @@ class _AddEventScreenState extends State<AddEventScreen> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Event submitted! Waiting for admin approval.'),
+          SnackBar(
+            content:
+                Text(AppLocale.addSuccess.getString(context)),
             backgroundColor: Colors.green,
           ),
         );

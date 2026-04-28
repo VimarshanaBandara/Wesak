@@ -1,13 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
+import '../l10n/app_locale.dart';
 import '../models/event_model.dart';
 import '../services/firestore_service.dart';
 import '../widgets/wesak_app_bar.dart';
 import 'event_detail_screen.dart';
 
 /// My Submissions screen - current user ගේ submitted events
-/// Pending, approved, rejected status badge real-time show කරනවා
 class MySubmissionsScreen extends StatelessWidget {
   const MySubmissionsScreen({super.key});
 
@@ -20,14 +21,15 @@ class MySubmissionsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F7),
-      appBar: const WesakAppBar(title: 'My Submissions'),
+      appBar: WesakAppBar(
+          title: AppLocale.submissionsTitle.getString(context)),
       body: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, authSnapshot) {
           final user = authSnapshot.data;
 
           if (user == null) {
-            return _buildSignInPrompt();
+            return _buildSignInPrompt(context);
           }
 
           return StreamBuilder<List<EventModel>>(
@@ -38,16 +40,16 @@ class MySubmissionsScreen extends StatelessWidget {
               }
 
               if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
+                return Center(
+                    child: Text('Error: ${snapshot.error}'));
               }
 
               final events = snapshot.data ?? [];
 
               if (events.isEmpty) {
-                return _buildEmptyState();
+                return _buildEmptyState(context);
               }
 
-              // Count badges
               final pending =
                   events.where((e) => e.status == 'pending').length;
               final approved =
@@ -57,13 +59,10 @@ class MySubmissionsScreen extends StatelessWidget {
 
               return CustomScrollView(
                 slivers: [
-                  // Stats header
                   SliverToBoxAdapter(
                     child: _buildStatsHeader(
-                        pending, approved, rejected, events.length),
+                        context, pending, approved, rejected, events.length),
                   ),
-
-                  // List
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                     sliver: SliverList(
@@ -85,11 +84,12 @@ class MySubmissionsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsHeader(
-      int pending, int approved, int rejected, int total) {
+  Widget _buildStatsHeader(BuildContext context, int pending, int approved,
+      int rejected, int total) {
     return Container(
       margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [_dark, _purple],
@@ -124,16 +124,20 @@ class MySubmissionsScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Your Submissions',
-                    style: TextStyle(
+                  Text(
+                    AppLocale.submissionsYour.getString(context),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
-                    '$total event${total == 1 ? '' : 's'} submitted',
+                    total == 1
+                        ? context.formatString(
+                            AppLocale.submissionsCountSingle, [total])
+                        : context.formatString(
+                            AppLocale.submissionsCountPlural, [total]),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 12,
@@ -146,13 +150,16 @@ class MySubmissionsScreen extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              _statBadge(pending.toString(), 'Pending',
+              _statBadge(context, pending.toString(),
+                  AppLocale.submissionsPending.getString(context),
                   const Color(0xFFFFA000)),
               const SizedBox(width: 10),
-              _statBadge(approved.toString(), 'Live',
+              _statBadge(context, approved.toString(),
+                  AppLocale.submissionsLive.getString(context),
                   const Color(0xFF2E7D32)),
               const SizedBox(width: 10),
-              _statBadge(rejected.toString(), 'Rejected',
+              _statBadge(context, rejected.toString(),
+                  AppLocale.submissionsRejected.getString(context),
                   const Color(0xFFC62828)),
             ],
           ),
@@ -161,7 +168,8 @@ class MySubmissionsScreen extends StatelessWidget {
     );
   }
 
-  Widget _statBadge(String count, String label, Color color) {
+  Widget _statBadge(
+      BuildContext context, String count, String label, Color color) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
@@ -194,7 +202,7 @@ class MySubmissionsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSignInPrompt() {
+  Widget _buildSignInPrompt(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -206,12 +214,13 @@ class MySubmissionsScreen extends StatelessWidget {
               color: _purple.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.lock_outline, size: 38, color: _purple),
+            child: const Icon(Icons.lock_outline,
+                size: 38, color: _purple),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'Sign in required',
-            style: TextStyle(
+          Text(
+            AppLocale.addSignInRequired.getString(context),
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: _dark,
@@ -219,7 +228,7 @@ class MySubmissionsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Go to Profile tab to sign in',
+            AppLocale.addGoToProfile.getString(context),
             style: TextStyle(color: Colors.grey[500], fontSize: 13),
           ),
         ],
@@ -227,7 +236,7 @@ class MySubmissionsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -243,9 +252,9 @@ class MySubmissionsScreen extends StatelessWidget {
                 size: 42, color: _purple.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 20),
-          const Text(
-            'No submissions yet',
-            style: TextStyle(
+          Text(
+            AppLocale.submissionsNoEvents.getString(context),
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: _dark,
@@ -253,7 +262,7 @@ class MySubmissionsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Add an event from the Add tab',
+            AppLocale.submissionsAddHint.getString(context),
             style: TextStyle(color: Colors.grey[500], fontSize: 13),
           ),
         ],
@@ -281,42 +290,34 @@ class _SubmissionCard extends StatelessWidget {
     'geetha': [Color(0xFF0D47A1), Color(0xFF1976D2)],
   };
 
-  static const _typeLabels = {
-    'dansal': 'Dansal',
-    'thorana': 'Thorana',
-    'kudu': 'Wesak Kudu',
-    'geetha': 'Bhakthi Geetha',
+  static const _statusColors = {
+    'pending': Color(0xFFFFA000),
+    'approved': Color(0xFF2E7D32),
+    'rejected': Color(0xFFC62828),
   };
-
-  static const _statusConfig = {
-    'pending': _StatusConfig(
-      label: 'Pending',
-      icon: Icons.hourglass_top_rounded,
-      color: Color(0xFFFFA000),
-      bg: Color(0xFFFFF8E1),
-    ),
-    'approved': _StatusConfig(
-      label: 'Live',
-      icon: Icons.check_circle_rounded,
-      color: Color(0xFF2E7D32),
-      bg: Color(0xFFE8F5E9),
-    ),
-    'rejected': _StatusConfig(
-      label: 'Rejected',
-      icon: Icons.cancel_rounded,
-      color: Color(0xFFC62828),
-      bg: Color(0xFFFFEBEE),
-    ),
+  static const _statusBg = {
+    'pending': Color(0xFFFFF8E1),
+    'approved': Color(0xFFE8F5E9),
+    'rejected': Color(0xFFFFEBEE),
+  };
+  static const _statusIcons = {
+    'pending': Icons.hourglass_top_rounded,
+    'approved': Icons.check_circle_rounded,
+    'rejected': Icons.cancel_rounded,
   };
 
   @override
   Widget build(BuildContext context) {
-    final status =
-        _statusConfig[event.status] ?? _statusConfig['pending']!;
+    final statusColor =
+        _statusColors[event.status] ?? _statusColors['pending']!;
+    final statusBg = _statusBg[event.status] ?? _statusBg['pending']!;
+    final statusIcon =
+        _statusIcons[event.status] ?? _statusIcons['pending']!;
     final gradients =
         _typeGradients[event.type] ?? [Colors.grey, Colors.grey];
     final typeIcon = _typeIcons[event.type] ?? Icons.event;
-    final typeLabel = _typeLabels[event.type] ?? event.type;
+    final typeLabel = AppLocale.typeLabel(context, event.type);
+    final statusLabel = AppLocale.statusLabel(context, event.status);
 
     return GestureDetector(
       onTap: () {
@@ -342,7 +343,6 @@ class _SubmissionCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Type color bar + icon
             Container(
               width: 64,
               height: 80,
@@ -357,18 +357,16 @@ class _SubmissionCard extends StatelessWidget {
                   bottomLeft: Radius.circular(16),
                 ),
               ),
-              child: Icon(typeIcon, color: Colors.white, size: 26),
+              child:
+                  Icon(typeIcon, color: Colors.white, size: 26),
             ),
-
-            // Content
             Expanded(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Name + status badge row
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -389,19 +387,19 @@ class _SubmissionCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: status.bg,
+                            color: statusBg,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(status.icon,
-                                  size: 11, color: status.color),
+                              Icon(statusIcon,
+                                  size: 11, color: statusColor),
                               const SizedBox(width: 3),
                               Text(
-                                status.label,
+                                statusLabel,
                                 style: TextStyle(
-                                  color: status.color,
+                                  color: statusColor,
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -412,7 +410,6 @@ class _SubmissionCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 5),
-                    // Type + city
                     Row(
                       children: [
                         Text(
@@ -439,8 +436,6 @@ class _SubmissionCard extends StatelessWidget {
                 ),
               ),
             ),
-
-            // Chevron (only for approved)
             if (event.status == 'approved')
               Padding(
                 padding: const EdgeInsets.only(right: 12),
@@ -452,17 +447,4 @@ class _SubmissionCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class _StatusConfig {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final Color bg;
-  const _StatusConfig({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.bg,
-  });
 }

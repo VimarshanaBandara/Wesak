@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localization/flutter_localization.dart';
+
+import '../l10n/app_locale.dart';
 
 /// Splash screen - app open වෙනකොට 3 seconds show කරනවා
 /// AppShell ට navigate කරනවා
@@ -224,10 +227,10 @@ class _SplashScreenState extends State<SplashScreen>
                         offset: Offset(0, _slideAnim.value),
                         child: FadeTransition(opacity: _fadeAnim, child: child),
                       ),
-                      child: const Text(
-                        'උතුම් වෙසක් මංගල්‍යයක් වේවා',
+                      child: Text(
+                        AppLocale.splashBlessing.getString(context),
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 16,
                           fontWeight: FontWeight.w400,

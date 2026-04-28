@@ -1,19 +1,20 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
+import '../l10n/app_locale.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../widgets/wesak_app_bar.dart';
 import 'admin/admin_screen.dart';
 
-/// Profile screen - user info, Google Sign-In, admin panel
+/// Profile screen - user info, Google Sign-In, language switcher, admin panel
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   static final _auth = AuthService();
   static final _userService = UserService();
 
-  // Wesak theme colors
   static const _purple = Color(0xFF6A0080);
   static const _saffron = Color(0xFFE65100);
 
@@ -21,7 +22,7 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      appBar: const WesakAppBar(title: 'Profile'),
+      appBar: WesakAppBar(title: AppLocale.profileTitle.getString(context)),
       body: StreamBuilder<User?>(
         stream: _auth.authStateChanges,
         builder: (context, authSnapshot) {
@@ -48,7 +49,6 @@ class ProfileScreen extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        // Header
         _buildHeader(
           child: Column(
             children: [
@@ -58,19 +58,19 @@ class ProfileScreen extends StatelessWidget {
                 child: const Icon(Icons.person, size: 40, color: _purple),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Guest User',
-                style: TextStyle(
+              Text(
+                AppLocale.profileGuest.getString(context),
+                style: const TextStyle(
                   color: Color(0xFF1A0533),
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
-                'Sign in to add events & track submissions',
+              Text(
+                AppLocale.profileGuestSubtitle.getString(context),
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey, fontSize: 12),
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
               ),
             ],
           ),
@@ -78,7 +78,7 @@ class ProfileScreen extends StatelessWidget {
 
         const SizedBox(height: 32),
 
-        // Sign in button - prominent
+        // Sign in button
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: GestureDetector(
@@ -97,14 +97,14 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.login, color: Colors.white, size: 20),
-                  SizedBox(width: 10),
+                  const Icon(Icons.login, color: Colors.white, size: 20),
+                  const SizedBox(width: 10),
                   Text(
-                    'Sign in with Google',
-                    style: TextStyle(
+                    AppLocale.profileSignIn.getString(context),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
@@ -132,7 +132,6 @@ class ProfileScreen extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        // Header
         _buildHeader(
           child: Column(
             children: [
@@ -170,14 +169,14 @@ class ProfileScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: _purple.withValues(alpha: 0.4)),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.verified, color: _purple, size: 12),
-                      SizedBox(width: 4),
+                      const Icon(Icons.verified, color: _purple, size: 12),
+                      const SizedBox(width: 4),
                       Text(
-                        'Administrator',
-                        style: TextStyle(
+                        AppLocale.profileAdminBadge.getString(context),
+                        style: const TextStyle(
                           color: _purple,
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -198,14 +197,13 @@ class ProfileScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Admin panel tile
               if (isAdmin) ...[
-                _sectionLabel('Admin'),
+                _sectionLabel(AppLocale.profileAdmin.getString(context)),
                 _tile(
                   icon: Icons.admin_panel_settings,
                   iconBg: _purple,
-                  title: 'Admin Panel',
-                  subtitle: 'Review pending submissions',
+                  title: AppLocale.profileAdminPanel.getString(context),
+                  subtitle: AppLocale.profileAdminSubtitle.getString(context),
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const AdminScreen()),
@@ -214,15 +212,15 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: 20),
               ],
 
-              _sectionLabel('Settings'),
+              _sectionLabel(AppLocale.profileSettings.getString(context)),
               _buildSettingsCard(context),
               const SizedBox(height: 20),
 
-              _sectionLabel('Account'),
+              _sectionLabel(AppLocale.profileAccount.getString(context)),
               _tile(
                 icon: Icons.logout,
                 iconBg: Colors.redAccent,
-                title: 'Sign Out',
+                title: AppLocale.profileSignOut.getString(context),
                 onTap: () => _auth.signOut(),
               ),
             ],
@@ -234,7 +232,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Reusable header banner ──────────────────────────────────────────────
+  // ── Header banner ────────────────────────────────────────────────────────
   Widget _buildHeader({required Widget child}) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 28, 24, 4),
@@ -242,38 +240,157 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Settings card ───────────────────────────────────────────────────────
+  // ── Settings card ────────────────────────────────────────────────────────
   Widget _buildSettingsCard(BuildContext context) {
+    // Current language code ෙකන් subtitle compute කරනවා
+    final langCode = Localizations.localeOf(context).languageCode;
+    final langSubtitle = langCode == 'si'
+        ? AppLocale.profileLangSi.getString(context)
+        : AppLocale.profileLangEn.getString(context);
+
     return Column(
       children: [
         _tile(
           icon: Icons.language,
           iconBg: const Color(0xFF1565C0),
-          title: 'Language',
-          subtitle: 'English',
-          onTap: () {},
+          title: AppLocale.profileLanguage.getString(context),
+          subtitle: langSubtitle,
+          onTap: () => _showLanguagePicker(context),
         ),
         const SizedBox(height: 8),
         _tile(
           icon: Icons.notifications_outlined,
           iconBg: _saffron,
-          title: 'Notifications',
-          subtitle: 'Manage alerts',
+          title: AppLocale.profileNotifications.getString(context),
+          subtitle: AppLocale.profileManageAlerts.getString(context),
           onTap: () {},
         ),
         const SizedBox(height: 8),
         _tile(
           icon: Icons.info_outline,
           iconBg: _purple,
-          title: 'About',
-          subtitle: 'Wesak 2026 · v1.0.0',
+          title: AppLocale.profileAbout.getString(context),
+          subtitle: AppLocale.profileAboutSubtitle.getString(context),
           onTap: () {},
         ),
       ],
     );
   }
 
-  // ── Single tile ─────────────────────────────────────────────────────────
+  // ── Language picker bottom sheet ─────────────────────────────────────────
+  void _showLanguagePicker(BuildContext context) {
+    final currentLang = Localizations.localeOf(context).languageCode;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+
+              Text(
+                AppLocale.profileSelectLang.getString(context),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A0533),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // English option
+              _langOption(
+                context: context,
+                flag: '🇬🇧',
+                label: 'English',
+                langCode: 'en',
+                selected: currentLang == 'en',
+              ),
+              const SizedBox(height: 10),
+
+              // Sinhala option
+              _langOption(
+                context: context,
+                flag: '🇱🇰',
+                label: 'සිංහල',
+                langCode: 'si',
+                selected: currentLang == 'si',
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _langOption({
+    required BuildContext context,
+    required String flag,
+    required String label,
+    required String langCode,
+    required bool selected,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pop(context);
+        FlutterLocalization.instance.translate(langCode);
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: selected
+              ? const Color(0xFF1565C0).withValues(alpha: 0.1)
+              : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected
+                ? const Color(0xFF1565C0)
+                : Colors.grey.shade200,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Text(flag, style: const TextStyle(fontSize: 22)),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: selected
+                      ? const Color(0xFF1565C0)
+                      : const Color(0xFF1A0533),
+                ),
+              ),
+            ),
+            if (selected)
+              const Icon(Icons.check_circle,
+                  color: Color(0xFF1565C0), size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Single tile ──────────────────────────────────────────────────────────
   Widget _tile({
     required IconData icon,
     required Color iconBg,
@@ -317,10 +434,7 @@ class ProfileScreen extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         subtitle,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ],
                   ],
@@ -334,7 +448,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Section label ───────────────────────────────────────────────────────
+  // ── Section label ────────────────────────────────────────────────────────
   Widget _sectionLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
@@ -356,7 +470,11 @@ class ProfileScreen extends StatelessWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Sign in failed: $e')),
+          SnackBar(
+            content: Text(
+              context.formatString(AppLocale.commonSignInFailed, ['$e']),
+            ),
+          ),
         );
       }
     }

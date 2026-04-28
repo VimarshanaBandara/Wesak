@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../l10n/app_locale.dart';
 import '../models/event_model.dart';
 import '../services/firestore_service.dart';
 import '../widgets/event_card.dart';
@@ -10,16 +12,11 @@ import '../widgets/wesak_app_bar.dart';
 
 enum _SortMode { defaultSort, nearMe }
 
-/// Category filtered event list screen with pagination (20 per page)
+/// Category filtered event list screen with pagination
 class EventListScreen extends StatefulWidget {
   final String eventType;
-  final String displayName;
 
-  const EventListScreen({
-    super.key,
-    required this.eventType,
-    required this.displayName,
-  });
+  const EventListScreen({super.key, required this.eventType});
 
   @override
   State<EventListScreen> createState() => _EventListScreenState();
@@ -29,7 +26,6 @@ class _EventListScreenState extends State<EventListScreen> {
   final _firestoreService = FirestoreService();
   final _scrollController = ScrollController();
 
-  // Pagination state
   final List<EventModel> _events = [];
   DocumentSnapshot? _lastDoc;
   bool _isLoading = false;
@@ -37,11 +33,9 @@ class _EventListScreenState extends State<EventListScreen> {
   bool _initialLoading = true;
   String? _loadError;
 
-  // Search
   final _searchController = TextEditingController();
   String _searchQuery = '';
 
-  // Sort
   _SortMode _sortMode = _SortMode.defaultSort;
   Position? _userPosition;
   bool _loadingGps = false;
@@ -63,13 +57,6 @@ class _EventListScreenState extends State<EventListScreen> {
     'geetha': Icons.music_note,
   };
 
-  static const _typeDescriptions = {
-    'dansal': 'Free food offerings for all',
-    'thorana': 'Illuminated Wesak structures',
-    'kudu': 'Traditional Wesak lanterns',
-    'geetha': 'Buddhist devotional music',
-  };
-
   @override
   void initState() {
     super.initState();
@@ -84,7 +71,7 @@ class _EventListScreenState extends State<EventListScreen> {
     super.dispose();
   }
 
-  // ── Pagination ───────────────────────────────────────────────────────────────
+  // ── Pagination ────────────────────────────────────────────────────────────
 
   Future<void> _loadFirstPage() async {
     setState(() {
@@ -112,12 +99,10 @@ class _EventListScreenState extends State<EventListScreen> {
           _loadError = null;
           _events.addAll(result.events);
           _lastDoc = result.lastDoc;
-          // returned count == pageSize නම් more ිතිෙය් හෑකි
           _hasMore = result.events.length >= FirestoreService.pageSize;
           _isLoading = false;
         });
 
-        // Page ිකෙකන් screen fill ිකෙනෙකෙරෙ ිනම් auto next page load
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_hasMore &&
               _scrollController.hasClients &&
@@ -130,21 +115,20 @@ class _EventListScreenState extends State<EventListScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _loadError = 'Failed to load events. Tap to retry.';
+          _loadError = 'error';
         });
       }
     }
   }
 
   void _onScroll() {
-    // List bottom ිකෙදන් 300px ිකදී next page load
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 300) {
       _loadPage();
     }
   }
 
-  // ── Sort / GPS ───────────────────────────────────────────────────────────────
+  // ── Sort / GPS ────────────────────────────────────────────────────────────
 
   Future<void> _enableNearMe() async {
     setState(() {
@@ -160,7 +144,7 @@ class _EventListScreenState extends State<EventListScreen> {
       if (perm == LocationPermission.deniedForever ||
           perm == LocationPermission.denied) {
         setState(() {
-          _gpsError = 'Location permission denied';
+          _gpsError = 'denied';
           _loadingGps = false;
           _sortMode = _SortMode.defaultSort;
         });
@@ -168,9 +152,8 @@ class _EventListScreenState extends State<EventListScreen> {
       }
 
       final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-        ),
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.medium),
       );
 
       setState(() {
@@ -180,7 +163,7 @@ class _EventListScreenState extends State<EventListScreen> {
       });
     } catch (_) {
       setState(() {
-        _gpsError = 'Could not get location';
+        _gpsError = 'error';
         _loadingGps = false;
         _sortMode = _SortMode.defaultSort;
       });
@@ -205,7 +188,6 @@ class _EventListScreenState extends State<EventListScreen> {
       list = _events;
     }
 
-    // City/location name search filter
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
       list = list
@@ -217,28 +199,28 @@ class _EventListScreenState extends State<EventListScreen> {
     return list;
   }
 
-  // ── Build ────────────────────────────────────────────────────────────────────
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
+    final displayName = AppLocale.typeLabel(context, widget.eventType);
+    final description = AppLocale.typeDesc(context, widget.eventType);
     final gradients =
         _typeGradients[widget.eventType] ?? [Colors.grey, Colors.blueGrey];
     final icon = _typeIcons[widget.eventType] ?? Icons.event;
-    final description = _typeDescriptions[widget.eventType] ?? '';
 
     if (_initialLoading) {
       return Scaffold(
         backgroundColor: const Color(0xFFF2F2F7),
-        appBar: WesakAppBar(title: widget.displayName, showBackButton: true),
+        appBar: WesakAppBar(title: displayName, showBackButton: true),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
-    // Initial load ිකදීම error ිවෙලා ිනම්
     if (_loadError != null && _events.isEmpty) {
       return Scaffold(
         backgroundColor: const Color(0xFFF2F2F7),
-        appBar: WesakAppBar(title: widget.displayName, showBackButton: true),
+        appBar: WesakAppBar(title: displayName, showBackButton: true),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -246,7 +228,7 @@ class _EventListScreenState extends State<EventListScreen> {
               Icon(Icons.wifi_off, size: 56, color: Colors.grey[400]),
               const SizedBox(height: 16),
               Text(
-                'Could not load events',
+                AppLocale.listCouldNotLoad.getString(context),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -255,7 +237,7 @@ class _EventListScreenState extends State<EventListScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Check your connection and try again',
+                AppLocale.listCheckConnection.getString(context),
                 style: TextStyle(fontSize: 13, color: Colors.grey[500]),
               ),
               const SizedBox(height: 20),
@@ -263,16 +245,14 @@ class _EventListScreenState extends State<EventListScreen> {
                 onTap: _loadFirstPage,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
+                      horizontal: 24, vertical: 12),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1A0533),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    'Retry',
-                    style: TextStyle(
+                  child: Text(
+                    AppLocale.listRetry.getString(context),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
@@ -289,38 +269,25 @@ class _EventListScreenState extends State<EventListScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F7),
-      appBar: WesakAppBar(title: widget.displayName, showBackButton: true),
+      appBar: WesakAppBar(title: displayName, showBackButton: true),
       body: _events.isEmpty
-          ? _buildEmptyState(gradients, icon)
+          ? _buildEmptyState(gradients, icon, displayName)
           : CustomScrollView(
               controller: _scrollController,
               slivers: [
-                // Header
                 SliverToBoxAdapter(
-                  child: _buildHeader(
-                    gradients,
-                    icon,
-                    description,
-                    events.length,
-                  ),
+                  child: _buildHeader(gradients, icon, description, events.length),
                 ),
-
-                // Sort bar
                 SliverToBoxAdapter(child: _buildSortBar(gradients)),
-
-                // Search bar
                 SliverToBoxAdapter(child: _buildSearchBar(gradients)),
 
-                // GPS error
                 if (_gpsError != null)
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
+                            horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
                           color: Colors.red.shade50,
                           borderRadius: BorderRadius.circular(10),
@@ -328,19 +295,16 @@ class _EventListScreenState extends State<EventListScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(
-                              Icons.location_off,
-                              size: 16,
-                              color: Colors.red,
-                            ),
+                            const Icon(Icons.location_off,
+                                size: 16, color: Colors.red),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                _gpsError!,
+                                _gpsError == 'denied'
+                                    ? AppLocale.listGpsDenied.getString(context)
+                                    : AppLocale.listGpsError.getString(context),
                                 style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.red,
-                                ),
+                                    fontSize: 12, color: Colors.red),
                               ),
                             ),
                           ],
@@ -349,21 +313,18 @@ class _EventListScreenState extends State<EventListScreen> {
                     ),
                   ),
 
-                // Event cards or no-results state
                 events.isEmpty
                     ? SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 48),
                           child: Column(
                             children: [
-                              Icon(
-                                Icons.search_off,
-                                size: 48,
-                                color: Colors.grey[300],
-                              ),
+                              Icon(Icons.search_off,
+                                  size: 48, color: Colors.grey[300]),
                               const SizedBox(height: 12),
                               Text(
-                                'No results for "$_searchQuery"',
+                                context.formatString(
+                                    AppLocale.listNoResults, [_searchQuery]),
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[500],
@@ -377,91 +338,90 @@ class _EventListScreenState extends State<EventListScreen> {
                     : SliverPadding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                         sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate((context, index) {
-                            final event = events[index];
-                            final dist = _sortMode == _SortMode.nearMe
-                                ? _distanceTo(event)
-                                : null;
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: EventCard(event: event, distanceKm: dist),
-                            );
-                          }, childCount: events.length),
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final event = events[index];
+                              final dist = _sortMode == _SortMode.nearMe
+                                  ? _distanceTo(event)
+                                  : null;
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child:
+                                    EventCard(event: event, distanceKm: dist),
+                              );
+                            },
+                            childCount: events.length,
+                          ),
                         ),
                       ),
 
-                // Bottom: loading / error / all-loaded indicator
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
                     child: _isLoading
                         ? _buildLoadMoreBanner(gradients, events.length)
                         : _loadError != null
-                        ? GestureDetector(
-                            onTap: _loadPage,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.red.shade50,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.red.shade200),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.refresh,
-                                    size: 16,
-                                    color: Colors.red,
+                            ? GestureDetector(
+                                onTap: _loadPage,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                        color: Colors.red.shade200),
                                   ),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    'Failed to load more — tap to retry',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.red,
-                                      fontWeight: FontWeight.w500,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.refresh,
+                                          size: 16, color: Colors.red),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        AppLocale.listFailedLoadMore
+                                            .getString(context),
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.red,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : !_hasMore
+                                ? Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                          color: Colors.grey.shade200),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                        : !_hasMore
-                        ? Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey.shade200),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.check_circle_outline,
-                                  size: 16,
-                                  color: Colors.grey[400],
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'All ${events.length} events loaded',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey[500],
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : const SizedBox.shrink(),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.check_circle_outline,
+                                            size: 16, color: Colors.grey[400]),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          context.formatString(
+                                              AppLocale.listAllLoaded,
+                                              [events.length]),
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.grey[500],
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : const SizedBox.shrink(),
                   ),
                 ),
               ],
@@ -469,7 +429,7 @@ class _EventListScreenState extends State<EventListScreen> {
     );
   }
 
-  // ── Widgets ──────────────────────────────────────────────────────────────────
+  // ── Widgets ───────────────────────────────────────────────────────────────
 
   Widget _buildHeader(
     List<Color> gradients,
@@ -512,7 +472,7 @@ class _EventListScreenState extends State<EventListScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.displayName,
+                  AppLocale.typeLabel(context, widget.eventType),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -530,9 +490,9 @@ class _EventListScreenState extends State<EventListScreen> {
               ],
             ),
           ),
-          // Loaded count badge
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(20),
@@ -557,9 +517,9 @@ class _EventListScreenState extends State<EventListScreen> {
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Row(
         children: [
-          const Text(
-            'Sort by',
-            style: TextStyle(
+          Text(
+            AppLocale.listSortBy.getString(context),
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: Colors.grey,
@@ -567,7 +527,7 @@ class _EventListScreenState extends State<EventListScreen> {
           ),
           const SizedBox(width: 10),
           _sortChip(
-            label: 'Default',
+            label: AppLocale.listSortDefault.getString(context),
             icon: Icons.sort,
             selected: _sortMode == _SortMode.defaultSort,
             activeColor: activeColor,
@@ -578,7 +538,7 @@ class _EventListScreenState extends State<EventListScreen> {
           ),
           const SizedBox(width: 8),
           _sortChip(
-            label: 'Near Me',
+            label: AppLocale.listSortNearMe.getString(context),
             icon: _loadingGps ? Icons.gps_not_fixed : Icons.near_me,
             selected: _sortMode == _SortMode.nearMe,
             activeColor: const Color(0xFF2E7D32),
@@ -642,11 +602,9 @@ class _EventListScreenState extends State<EventListScreen> {
                 ),
               )
             else
-              Icon(
-                icon,
-                size: 13,
-                color: selected ? Colors.white : Colors.grey[600],
-              ),
+              Icon(icon,
+                  size: 13,
+                  color: selected ? Colors.white : Colors.grey[600]),
             const SizedBox(width: 5),
             Text(
               label,
@@ -682,23 +640,23 @@ class _EventListScreenState extends State<EventListScreen> {
           onChanged: (val) => setState(() => _searchQuery = val.trim()),
           style: const TextStyle(fontSize: 14),
           decoration: InputDecoration(
-            hintText: 'Search by city or event name...',
+            hintText: AppLocale.listSearchPlaceholder.getString(context),
             hintStyle: TextStyle(fontSize: 13, color: Colors.grey[400]),
-            prefixIcon: Icon(Icons.search, color: gradients.first, size: 20),
+            prefixIcon:
+                Icon(Icons.search, color: gradients.first, size: 20),
             suffixIcon: _searchQuery.isNotEmpty
                 ? GestureDetector(
                     onTap: () {
                       _searchController.clear();
                       setState(() => _searchQuery = '');
                     },
-                    child: Icon(Icons.close, size: 18, color: Colors.grey[400]),
+                    child: Icon(Icons.close,
+                        size: 18, color: Colors.grey[400]),
                   )
                 : null,
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 13,
-            ),
+                horizontal: 14, vertical: 13),
           ),
         ),
       ),
@@ -716,7 +674,8 @@ class _EventListScreenState extends State<EventListScreen> {
           ],
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: gradients.first.withValues(alpha: 0.2)),
+        border:
+            Border.all(color: gradients.first.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -726,12 +685,13 @@ class _EventListScreenState extends State<EventListScreen> {
             height: 16,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(gradients.first),
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(gradients.first),
             ),
           ),
           const SizedBox(width: 10),
           Text(
-            'Loading more events...',
+            AppLocale.listLoadingMore.getString(context),
             style: TextStyle(
               fontSize: 13,
               color: gradients.first,
@@ -740,13 +700,15 @@ class _EventListScreenState extends State<EventListScreen> {
           ),
           const SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
               color: gradients.first.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              '$loadedCount loaded',
+              context.formatString(
+                  AppLocale.listLoadedCount, [loadedCount]),
               style: TextStyle(
                 fontSize: 11,
                 color: gradients.first,
@@ -759,7 +721,8 @@ class _EventListScreenState extends State<EventListScreen> {
     );
   }
 
-  Widget _buildEmptyState(List<Color> gradients, IconData icon) {
+  Widget _buildEmptyState(
+      List<Color> gradients, IconData icon, String displayName) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -784,7 +747,7 @@ class _EventListScreenState extends State<EventListScreen> {
           ),
           const SizedBox(height: 20),
           Text(
-            'No ${widget.displayName} yet',
+            context.formatString(AppLocale.listNoEvents, [displayName]),
             style: const TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
@@ -793,7 +756,7 @@ class _EventListScreenState extends State<EventListScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Be the first to add one!',
+            AppLocale.listBeFirst.getString(context),
             style: TextStyle(color: Colors.grey[500], fontSize: 13),
           ),
         ],

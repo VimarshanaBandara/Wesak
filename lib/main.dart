@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
 import 'firebase_options.dart';
+import 'l10n/app_locale.dart';
 import 'screens/home_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/map_screen.dart';
@@ -10,10 +12,17 @@ import 'screens/my_submissions_screen.dart';
 import 'screens/profile_screen.dart';
 
 void main() async {
-  // Flutter engine ready වෙනකම් wait කරනවා - async main ට required
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Firebase initialize - google-services.json ෙකන් config load කරනවා
+  // Localization initialize - Sinhala + English
+  FlutterLocalization.instance.init(
+    mapLocales: [
+      MapLocale('en', AppLocale.EN),
+      MapLocale('si', AppLocale.SI),
+    ],
+    initLanguageCode: 'en',
+  );
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -21,19 +30,37 @@ void main() async {
   runApp(const WesakApp());
 }
 
-/// App root widget - sets up theme and MaterialApp
-class WesakApp extends StatelessWidget {
+/// App root widget - localization + theme setup
+class WesakApp extends StatefulWidget {
   const WesakApp({super.key});
+
+  @override
+  State<WesakApp> createState() => _WesakAppState();
+}
+
+class _WesakAppState extends State<WesakApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Language change ෙකදී MaterialApp rebuild - locale update
+    FlutterLocalization.instance.onTranslatedLanguage = _onTranslatedLanguage;
+  }
+
+  void _onTranslatedLanguage(Locale? locale) {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Wesak',
       debugShowCheckedModeBanner: false,
+      // Localization delegates + supported locales
+      supportedLocales: FlutterLocalization.instance.supportedLocales,
+      localizationsDelegates: FlutterLocalization.instance.localizationsDelegates,
       theme: ThemeData(
-        // Wesak theme - warm amber/lantern color
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFFF8F00), // Amber 800
+          seedColor: const Color(0xFFFF8F00),
           brightness: Brightness.light,
         ),
         useMaterial3: true,
@@ -43,7 +70,7 @@ class WesakApp extends StatelessWidget {
   }
 }
 
-/// App shell - holds the bottom navigation and switches between main screens
+/// App shell - bottom navigation
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -52,20 +79,13 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  // Currently selected bottom nav tab index
   int _selectedIndex = 0;
-
-  // Map tab ෙකට ආවෙකදී increment කරනවා - fresh MapScreen rebuild trigger
   int _mapVisitCount = 0;
 
   @override
   Widget build(BuildContext context) {
-    // screens list - index ෙකන් current screen select කරනවා
-    // MapScreen IndexedStack ෙකන් outside - tab switch ෙකදී fresh rebuild
-    // FlutterMap + IndexedStack (Offstage) combination ේ rendering bug fix
     final screens = [
       const HomeScreen(),
-      // MapScreen ට key දෙනවා - tab ෙකට ආවෙකදී always fresh FlutterMap
       MapScreen(key: ValueKey(_mapVisitCount)),
       const AddEventScreen(),
       const MySubmissionsScreen(),
@@ -77,12 +97,9 @@ class _AppShellState extends State<AppShell> {
       bottomNavigationBar: Theme(
         data: Theme.of(context).copyWith(
           navigationBarTheme: NavigationBarThemeData(
-            // AppBar ේ gradient start color match කරනවා
             backgroundColor: const Color(0xFF1A0533),
-            // Selected indicator - saffron orange
             indicatorColor: const Color(0xFFE65100),
             surfaceTintColor: Colors.transparent,
-            // Selected label - white bold
             labelTextStyle: WidgetStateProperty.resolveWith((states) {
               if (states.contains(WidgetState.selected)) {
                 return const TextStyle(
@@ -91,12 +108,8 @@ class _AppShellState extends State<AppShell> {
                   fontWeight: FontWeight.w700,
                 );
               }
-              return const TextStyle(
-                color: Colors.white54,
-                fontSize: 11,
-              );
+              return const TextStyle(color: Colors.white54, fontSize: 11);
             }),
-            // Selected icon - white, unselected - faded white
             iconTheme: WidgetStateProperty.resolveWith((states) {
               if (states.contains(WidgetState.selected)) {
                 return const IconThemeData(color: Colors.white);
@@ -113,31 +126,31 @@ class _AppShellState extends State<AppShell> {
               _selectedIndex = index;
             });
           },
-          destinations: const [
+          destinations: [
             NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'Home',
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home),
+              label: AppLocale.navHome.getString(context),
             ),
             NavigationDestination(
-              icon: Icon(Icons.map_outlined),
-              selectedIcon: Icon(Icons.map),
-              label: 'Map',
+              icon: const Icon(Icons.map_outlined),
+              selectedIcon: const Icon(Icons.map),
+              label: AppLocale.navMap.getString(context),
             ),
             NavigationDestination(
-              icon: Icon(Icons.add_circle_outline),
-              selectedIcon: Icon(Icons.add_circle),
-              label: 'Add',
+              icon: const Icon(Icons.add_circle_outline),
+              selectedIcon: const Icon(Icons.add_circle),
+              label: AppLocale.navAdd.getString(context),
             ),
             NavigationDestination(
-              icon: Icon(Icons.list_alt_outlined),
-              selectedIcon: Icon(Icons.list_alt),
-              label: 'My Events',
+              icon: const Icon(Icons.list_alt_outlined),
+              selectedIcon: const Icon(Icons.list_alt),
+              label: AppLocale.navMyEvents.getString(context),
             ),
             NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person),
-              label: 'Profile',
+              icon: const Icon(Icons.person_outline),
+              selectedIcon: const Icon(Icons.person),
+              label: AppLocale.navProfile.getString(context),
             ),
           ],
         ),

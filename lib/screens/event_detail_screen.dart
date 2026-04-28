@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:share_plus/share_plus.dart' show Share;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../l10n/app_locale.dart';
 import '../models/event_model.dart';
 
 /// Full-page Event Detail Screen
-/// Photos gallery, directions, share button
 class EventDetailScreen extends StatefulWidget {
   final EventModel event;
 
@@ -31,12 +32,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     'kudu': Icons.light_mode,
     'geetha': Icons.music_note,
   };
-  static const _typeLabels = {
-    'dansal': 'Dansal',
-    'thorana': 'Thorana',
-    'kudu': 'Wesak Kudu',
-    'geetha': 'Bhakthi Geetha',
-  };
 
   @override
   void dispose() {
@@ -56,7 +51,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       backgroundColor: const Color(0xFFF5F5F5),
       body: CustomScrollView(
         slivers: [
-          // ── Header / Photo gallery ─────────────────────────────────
+          // ── Header / Photo gallery ────────────────────────────────
           SliverAppBar(
             expandedHeight: hasPhotos ? 280 : 160,
             pinned: true,
@@ -83,13 +78,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     color: Colors.black26,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.share, color: Colors.white, size: 16),
-                      SizedBox(width: 4),
+                      const Icon(Icons.share,
+                          color: Colors.white, size: 16),
+                      const SizedBox(width: 4),
                       Text(
-                        'Share',
-                        style: TextStyle(
+                        AppLocale.detailShare.getString(context),
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -107,31 +103,23 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             ),
           ),
 
-          // ── Content ────────────────────────────────────────────────
+          // ── Content ──────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Main info card
                 _buildInfoCard(event),
                 const SizedBox(height: 12),
-
-                // Action buttons
                 _buildActionButtons(event),
                 const SizedBox(height: 12),
-
-                // Photos section (if any)
                 if (hasPhotos) ...[
                   _buildPhotosSection(event),
                   const SizedBox(height: 12),
                 ],
-
-                // Description
                 if (event.description.isNotEmpty) ...[
                   _buildDescriptionCard(event),
                   const SizedBox(height: 12),
                 ],
-
                 const SizedBox(height: 32),
               ],
             ),
@@ -141,7 +129,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  // ── Photo gallery (swipeable) ────────────────────────────────────────
   Widget _buildPhotoGallery(EventModel event) {
     return Stack(
       children: [
@@ -161,15 +148,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           color: Colors.white, strokeWidth: 2),
                     ),
                   ),
-            errorBuilder: (_, __, ___) => Container(
+            errorBuilder: (_, _, _) => Container(
               color: _typeColor,
               child: const Icon(Icons.broken_image,
                   color: Colors.white54, size: 48),
             ),
           ),
         ),
-
-        // Dark gradient bottom — text readability
         Positioned(
           bottom: 0,
           left: 0,
@@ -185,8 +170,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             ),
           ),
         ),
-
-        // Dots indicator
         if (event.photos.length > 1)
           Positioned(
             bottom: 12,
@@ -215,17 +198,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  // ── Gradient header (no photos) ──────────────────────────────────────
   Widget _buildGradientHeader(EventModel event) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1A0533),
-            _typeColor,
-          ],
+          colors: [const Color(0xFF1A0533), _typeColor],
         ),
       ),
       child: Center(
@@ -252,7 +231,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  // ── Main info card ───────────────────────────────────────────────────
   Widget _buildInfoCard(EventModel event) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -271,7 +249,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Type badge
           Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -286,7 +263,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     size: 13, color: _typeColor),
                 const SizedBox(width: 5),
                 Text(
-                  _typeLabels[event.type] ?? event.type.toUpperCase(),
+                  AppLocale.typeLabel(context, event.type),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -297,8 +274,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             ),
           ),
           const SizedBox(height: 10),
-
-          // Name
           Text(
             event.name,
             style: const TextStyle(
@@ -308,8 +283,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               height: 1.2,
             ),
           ),
-
-          // City
           if (event.city.isNotEmpty) ...[
             const SizedBox(height: 10),
             Row(
@@ -341,13 +314,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  // ── Action buttons ───────────────────────────────────────────────────
   Widget _buildActionButtons(EventModel event) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          // Directions button
           Expanded(
             flex: 2,
             child: GestureDetector(
@@ -359,21 +330,21 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color:
-                          const Color(0xFF1A0533).withValues(alpha: 0.35),
+                      color: const Color(0xFF1A0533).withValues(alpha: 0.35),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.directions, color: Colors.white, size: 20),
-                    SizedBox(width: 8),
+                    const Icon(Icons.directions,
+                        color: Colors.white, size: 20),
+                    const SizedBox(width: 8),
                     Text(
-                      'Get Directions',
-                      style: TextStyle(
+                      AppLocale.detailGetDirections.getString(context),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
@@ -385,8 +356,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             ),
           ),
           const SizedBox(width: 10),
-
-          // Share button
           GestureDetector(
             onTap: _shareEvent,
             child: Container(
@@ -412,7 +381,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  // ── Full photos section ──────────────────────────────────────────────
   Widget _buildPhotosSection(EventModel event) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -421,9 +389,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         children: [
           Row(
             children: [
-              const Text(
-                'PHOTOS',
-                style: TextStyle(
+              Text(
+                AppLocale.detailPhotos.getString(context),
+                style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                   color: Colors.grey,
@@ -433,7 +401,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               const SizedBox(width: 6),
               Text(
                 '(${event.photos.length})',
-                style: const TextStyle(fontSize: 11, color: Colors.grey),
+                style:
+                    const TextStyle(fontSize: 11, color: Colors.grey),
               ),
             ],
           ),
@@ -445,7 +414,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               itemCount: event.photos.length,
               separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, i) => GestureDetector(
-                onTap: () => _openPhotoViewer(context, event.photos, i),
+                onTap: () =>
+                    _openPhotoViewer(context, event.photos, i),
                 child: Hero(
                   tag: 'photo_$i',
                   child: ClipRRect(
@@ -477,7 +447,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  // ── Description card ─────────────────────────────────────────────────
   Widget _buildDescriptionCard(EventModel event) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -496,9 +465,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'ABOUT',
-            style: TextStyle(
+          Text(
+            AppLocale.detailAbout.getString(context),
+            style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
               color: Colors.grey,
@@ -519,7 +488,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  // ── Actions ──────────────────────────────────────────────────────────
   Future<void> _openDirections(EventModel event) async {
     final uri = Uri.parse(
       'geo:${event.lat},${event.lng}?q=${event.lat},${event.lng}(${Uri.encodeComponent(event.name)})',
@@ -536,20 +504,21 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   void _shareEvent() {
     final event = widget.event;
+    final typeLabel = AppLocale.typeLabel(context, event.type);
     final text = '🪔 ${event.name}\n'
         '📍 ${event.city.isNotEmpty ? event.city : 'Sri Lanka'}\n'
-        '🎉 ${_typeLabels[event.type] ?? event.type}\n\n'
+        '🎉 $typeLabel\n\n'
         'Shared via Wesak 2026 App';
     Share.share(text);
   }
 
-  // ── Full-screen photo viewer ─────────────────────────────────────────
   void _openPhotoViewer(
       BuildContext context, List<String> photos, int initialIndex) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => _PhotoViewer(photos: photos, initialIndex: initialIndex),
+        builder: (_) =>
+            _PhotoViewer(photos: photos, initialIndex: initialIndex),
       ),
     );
   }
@@ -560,7 +529,8 @@ class _PhotoViewer extends StatefulWidget {
   final List<String> photos;
   final int initialIndex;
 
-  const _PhotoViewer({required this.photos, required this.initialIndex});
+  const _PhotoViewer(
+      {required this.photos, required this.initialIndex});
 
   @override
   State<_PhotoViewer> createState() => _PhotoViewerState();

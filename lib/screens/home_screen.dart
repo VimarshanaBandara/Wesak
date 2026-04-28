@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
+import '../l10n/app_locale.dart';
 import '../widgets/wesak_app_bar.dart';
 import 'event_list_screen.dart';
 import 'nearby_screen.dart';
@@ -13,7 +15,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8EE),
       appBar: WesakAppBar(
-        title: 'Wesak 2026',
+        title: AppLocale.homeTitle.getString(context),
         actions: [
           IconButton(
             icon: const Icon(Icons.search, color: Colors.white),
@@ -31,11 +33,11 @@ class HomeScreen extends StatelessWidget {
           children: [
             _buildWelcomeBanner(context),
             const SizedBox(height: 28),
-            const Padding(
-              padding: EdgeInsets.only(left: 2, bottom: 14),
+            Padding(
+              padding: const EdgeInsets.only(left: 2, bottom: 14),
               child: Text(
-                'Browse by Category',
-                style: TextStyle(
+                AppLocale.homeBrowseCategory.getString(context),
+                style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF1A0533),
@@ -76,9 +78,9 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'සුභ වෙසක් !',
-                  style: TextStyle(
+                Text(
+                  AppLocale.homeGreeting.getString(context),
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
@@ -86,9 +88,9 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
-                  'Explore Dansal, Thorana & more near you',
-                  style: TextStyle(
+                Text(
+                  AppLocale.homeSubtitle.getString(context),
+                  style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 13,
                     height: 1.4,
@@ -102,10 +104,16 @@ class HomeScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(builder: (_) => const NearbyScreen()),
                       ),
-                      child: _buildBadge(Icons.location_on, 'Find Nearby'),
+                      child: _buildBadge(
+                        Icons.location_on,
+                        AppLocale.homeFindNearby.getString(context),
+                      ),
                     ),
                     const SizedBox(width: 8),
-                    _buildBadge(Icons.verified, 'Verified'),
+                    _buildBadge(
+                      Icons.verified,
+                      AppLocale.homeVerified.getString(context),
+                    ),
                   ],
                 ),
               ],
@@ -159,25 +167,21 @@ class HomeScreen extends StatelessWidget {
   Widget _buildCategoryGrid(BuildContext context) {
     const categories = [
       _Category(
-        name: 'Dansal',
         eventType: 'dansal',
         icon: Icons.restaurant,
         gradientColors: [Color(0xFFBF360C), Color(0xFFFF6D00)],
       ),
       _Category(
-        name: 'Thorana',
         eventType: 'thorana',
         icon: Icons.account_balance,
         gradientColors: [Color(0xFF4A148C), Color(0xFF7B1FA2)],
       ),
       _Category(
-        name: 'Wesak Kudu',
         eventType: 'kudu',
         icon: Icons.light_mode,
         gradientColors: [Color(0xFFF57F17), Color(0xFFFFD600)],
       ),
       _Category(
-        name: 'Bhakthi Geetha',
         eventType: 'geetha',
         icon: Icons.music_note,
         gradientColors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
@@ -198,12 +202,12 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildCategoryCard(BuildContext context, _Category cat) {
+    final displayName = AppLocale.typeLabel(context, cat.eventType);
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) =>
-              EventListScreen(eventType: cat.eventType, displayName: cat.name),
+          builder: (_) => EventListScreen(eventType: cat.eventType),
         ),
       ),
       child: Container(
@@ -239,7 +243,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                cat.name,
+                displayName,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 14.5,
@@ -248,9 +252,9 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              const Text(
-                'Tap to explore',
-                style: TextStyle(color: Colors.white60, fontSize: 11),
+              Text(
+                AppLocale.homeTapExplore.getString(context),
+                style: const TextStyle(color: Colors.white60, fontSize: 11),
               ),
             ],
           ),
@@ -261,13 +265,11 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _Category {
-  final String name;
   final String eventType;
   final IconData icon;
   final List<Color> gradientColors;
 
   const _Category({
-    required this.name,
     required this.eventType,
     required this.icon,
     required this.gradientColors,

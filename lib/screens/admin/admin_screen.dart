@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 
+import '../../l10n/app_locale.dart';
 import '../../models/event_model.dart';
 import '../../services/firestore_service.dart';
 import '../../widgets/wesak_app_bar.dart';
 
-/// Admin Panel - pending events approve/reject කරනවා
-/// Profile screen ේ admin role ෙකදී විතරක් accessible
+/// Admin Panel - pending events approve/reject
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
 
@@ -14,7 +15,10 @@ class AdminScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const WesakAppBar(title: 'Admin Panel', showBackButton: true),
+      appBar: WesakAppBar(
+        title: AppLocale.adminTitle.getString(context),
+        showBackButton: true,
+      ),
       body: StreamBuilder<List<EventModel>>(
         stream: _firestoreService.getPendingEventsStream(),
         builder: (context, snapshot) {
@@ -29,14 +33,14 @@ class AdminScreen extends StatelessWidget {
           final events = snapshot.data ?? [];
 
           if (events.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle_outline,
+                  const Icon(Icons.check_circle_outline,
                       size: 64, color: Colors.green),
-                  SizedBox(height: 16),
-                  Text('No pending approvals'),
+                  const SizedBox(height: 16),
+                  Text(AppLocale.adminNoPending.getString(context)),
                 ],
               ),
             );
@@ -55,7 +59,6 @@ class AdminScreen extends StatelessWidget {
   }
 }
 
-/// Pending event card - approve/reject buttons
 class _PendingEventCard extends StatelessWidget {
   final EventModel event;
 
@@ -71,7 +74,6 @@ class _PendingEventCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Event type badge + name
             Row(
               children: [
                 Container(
@@ -82,7 +84,7 @@ class _PendingEventCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    event.type.toUpperCase(),
+                    AppLocale.typeLabel(context, event.type).toUpperCase(),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -103,27 +105,28 @@ class _PendingEventCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
 
-            // City + coordinates
             if (event.city.isNotEmpty)
               Row(
                 children: [
-                  const Icon(Icons.location_city, size: 14, color: Colors.grey),
+                  const Icon(Icons.location_city,
+                      size: 14, color: Colors.grey),
                   const SizedBox(width: 4),
                   Text(event.city,
                       style: const TextStyle(color: Colors.grey)),
                 ],
               ),
 
-            // GPS coordinates - location picked නේද confirm
             if (event.lat != 0.0 && event.lng != 0.0) ...[
               const SizedBox(height: 2),
               Row(
                 children: [
-                  const Icon(Icons.location_on, size: 14, color: Colors.grey),
+                  const Icon(Icons.location_on,
+                      size: 14, color: Colors.grey),
                   const SizedBox(width: 4),
                   Text(
                     '${event.lat.toStringAsFixed(4)}, ${event.lng.toStringAsFixed(4)}',
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    style: const TextStyle(
+                        color: Colors.grey, fontSize: 12),
                   ),
                 ],
               ),
@@ -134,7 +137,6 @@ class _PendingEventCard extends StatelessWidget {
               Text(event.description),
             ],
 
-            // Event photos - Storage ෙකන් load කරනවා
             if (event.photos.isNotEmpty) ...[
               const SizedBox(height: 10),
               SizedBox(
@@ -150,16 +152,18 @@ class _PendingEventCard extends StatelessWidget {
                       width: 80,
                       height: 80,
                       fit: BoxFit.cover,
-                      loadingBuilder: (_, child, progress) => progress == null
-                          ? child
-                          : Container(
-                              width: 80,
-                              height: 80,
-                              color: Colors.grey[200],
-                              child: const Center(
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            ),
+                      loadingBuilder: (_, child, progress) =>
+                          progress == null
+                              ? child
+                              : Container(
+                                  width: 80,
+                                  height: 80,
+                                  color: Colors.grey[200],
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
+                                  ),
+                                ),
                     ),
                   ),
                 ),
@@ -170,28 +174,28 @@ class _PendingEventCard extends StatelessWidget {
             const Divider(height: 1),
             const SizedBox(height: 8),
 
-            // Approve / Reject buttons
             Row(
               children: [
-                // Reject button
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => _showRejectDialog(context),
                     icon: const Icon(Icons.close, color: Colors.red),
-                    label: const Text('Reject',
-                        style: TextStyle(color: Colors.red)),
+                    label: Text(
+                      AppLocale.adminReject.getString(context),
+                      style: const TextStyle(color: Colors.red),
+                    ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.red),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Approve button
                 Expanded(
                   child: FilledButton.icon(
                     onPressed: () => _approve(context),
                     icon: const Icon(Icons.check),
-                    label: const Text('Approve'),
+                    label:
+                        Text(AppLocale.adminApprove.getString(context)),
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.green,
                     ),
@@ -205,14 +209,16 @@ class _PendingEventCard extends StatelessWidget {
     );
   }
 
-  /// Approve - verified:true, status:'approved' → map ේ show වෙනවා
   Future<void> _approve(BuildContext context) async {
     try {
       await _firestoreService.approveEvent(event.id);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('"${event.name}" approved and live on map!'),
+            content: Text(
+              context.formatString(
+                  AppLocale.adminApprovedMsg, [event.name]),
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -226,25 +232,25 @@ class _PendingEventCard extends StatelessWidget {
     }
   }
 
-  /// Reject dialog - optional reason ඇතුළත් කරන්න
   Future<void> _showRejectDialog(BuildContext context) async {
     final reasonController = TextEditingController();
 
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reject Event'),
+        title: Text(AppLocale.adminRejectTitle.getString(context)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Reject "${event.name}"?'),
+            Text('${AppLocale.adminReject.getString(context)} "${event.name}"?'),
             const SizedBox(height: 12),
             TextField(
               controller: reasonController,
-              decoration: const InputDecoration(
-                labelText: 'Reason (optional)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText:
+                    AppLocale.adminRejectReason.getString(context),
+                border: const OutlineInputBorder(),
               ),
               maxLines: 2,
             ),
@@ -253,12 +259,14 @@ class _PendingEventCard extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child:
+                Text(AppLocale.adminCancel.getString(context)),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Reject'),
+            child:
+                Text(AppLocale.adminReject.getString(context)),
           ),
         ],
       ),
@@ -275,7 +283,10 @@ class _PendingEventCard extends StatelessWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('"${event.name}" rejected.'),
+              content: Text(
+                context.formatString(
+                    AppLocale.adminRejectedMsg, [event.name]),
+              ),
               backgroundColor: Colors.red,
             ),
           );

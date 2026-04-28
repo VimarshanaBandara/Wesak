@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../l10n/app_locale.dart';
 import '../models/event_model.dart';
 import '../services/firestore_service.dart';
 import '../widgets/event_card.dart';
 import '../widgets/wesak_app_bar.dart';
 
-/// Nearby Events screen — GPS use කරලා km ෙකන් sort කරලා show කරනවා
+/// Nearby Events screen — GPS use කරලා km filter
 class NearbyScreen extends StatefulWidget {
   const NearbyScreen({super.key});
 
@@ -23,11 +25,8 @@ class _NearbyScreenState extends State<NearbyScreen> {
   bool _loadingGps = true;
   String? _gpsError;
 
-  // km filter - default 50km
   double _radiusKm = 50;
   static const _radiusOptions = [5.0, 10.0, 25.0, 50.0, 100.0];
-
-  // Distance calculator - latlong2
   static const _distCalc = Distance();
 
   @override
@@ -51,7 +50,7 @@ class _NearbyScreenState extends State<NearbyScreen> {
       if (perm == LocationPermission.deniedForever ||
           perm == LocationPermission.denied) {
         setState(() {
-          _gpsError = 'Location permission denied.\nPlease enable in Settings.';
+          _gpsError = 'denied';
           _loadingGps = false;
         });
         return;
@@ -71,14 +70,13 @@ class _NearbyScreenState extends State<NearbyScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _gpsError = 'Could not get location. Please try again.';
+          _gpsError = 'error';
           _loadingGps = false;
         });
       }
     }
   }
 
-  /// Haversine distance km — user position → event
   double _distanceTo(EventModel event) {
     if (_userPosition == null) return double.infinity;
     return _distCalc.as(
@@ -98,10 +96,9 @@ class _NearbyScreenState extends State<NearbyScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: WesakAppBar(
-        title: 'Nearby Events',
+        title: AppLocale.nearbyTitle.getString(context),
         showBackButton: true,
         actions: [
-          // Retry GPS button
           if (_gpsError != null)
             IconButton(
               icon: const Icon(Icons.refresh, color: Colors.white),
@@ -111,10 +108,7 @@ class _NearbyScreenState extends State<NearbyScreen> {
       ),
       body: Column(
         children: [
-          // ── Radius filter bar ──────────────────────────────────────
           if (_userPosition != null) _buildRadiusBar(),
-
-          // ── Content ───────────────────────────────────────────────
           Expanded(child: _buildBody()),
         ],
       ),
@@ -129,9 +123,9 @@ class _NearbyScreenState extends State<NearbyScreen> {
         children: [
           const Icon(Icons.radar, size: 18, color: Color(0xFF6A0080)),
           const SizedBox(width: 8),
-          const Text(
-            'Within',
-            style: TextStyle(
+          Text(
+            AppLocale.nearbyWithin.getString(context),
+            style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: Color(0xFF1A0533),
@@ -167,7 +161,9 @@ class _NearbyScreenState extends State<NearbyScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: selected ? Colors.white : Colors.grey[600],
+                          color: selected
+                              ? Colors.white
+                              : Colors.grey[600],
                         ),
                       ),
                     ),
@@ -199,18 +195,18 @@ class _NearbyScreenState extends State<NearbyScreen> {
                   size: 36, color: Color(0xFF6A0080)),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Getting your location...',
-              style: TextStyle(
+            Text(
+              AppLocale.nearbyGettingLocation.getString(context),
+              style: const TextStyle(
                 fontSize: 15,
                 color: Color(0xFF1A0533),
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Please allow location access',
-              style: TextStyle(color: Colors.grey, fontSize: 13),
+            Text(
+              AppLocale.nearbyAllowLocation.getString(context),
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
             ),
             const SizedBox(height: 20),
             const CircularProgressIndicator(
@@ -224,6 +220,10 @@ class _NearbyScreenState extends State<NearbyScreen> {
 
     // GPS error
     if (_gpsError != null) {
+      final errorMsg = _gpsError == 'denied'
+          ? AppLocale.nearbyPermissionDenied.getString(context)
+          : AppLocale.nearbyLocationError.getString(context);
+
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -242,7 +242,7 @@ class _NearbyScreenState extends State<NearbyScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                _gpsError!,
+                errorMsg,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 14,
@@ -259,9 +259,9 @@ class _NearbyScreenState extends State<NearbyScreen> {
                     color: const Color(0xFF1A0533),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    'Try Again',
-                    style: TextStyle(
+                  child: Text(
+                    AppLocale.nearbyTryAgain.getString(context),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
@@ -284,7 +284,6 @@ class _NearbyScreenState extends State<NearbyScreen> {
 
         final all = snapshot.data ?? [];
 
-        // Distance compute + filter by radius + sort
         final withDist = all
             .map((e) => (event: e, dist: _distanceTo(e)))
             .where((e) => e.dist <= _radiusKm)
@@ -300,7 +299,8 @@ class _NearbyScreenState extends State<NearbyScreen> {
                     size: 64, color: Colors.grey[300]),
                 const SizedBox(height: 16),
                 Text(
-                  'No events within ${_radiusKm.round()} km',
+                  context.formatString(
+                      AppLocale.nearbyNoEvents, [_radiusKm.round()]),
                   style: const TextStyle(
                     fontSize: 15,
                     color: Color(0xFF1A0533),
@@ -308,9 +308,10 @@ class _NearbyScreenState extends State<NearbyScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Try a larger radius',
-                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                Text(
+                  AppLocale.nearbyTryLarger.getString(context),
+                  style:
+                      const TextStyle(color: Colors.grey, fontSize: 13),
                 ),
               ],
             ),
@@ -320,11 +321,10 @@ class _NearbyScreenState extends State<NearbyScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // User location info bar
             Container(
               color: Colors.white,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 10),
               child: Row(
                 children: [
                   Container(
@@ -339,7 +339,13 @@ class _NearbyScreenState extends State<NearbyScreen> {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    '${withDist.length} event${withDist.length == 1 ? '' : 's'} within ${_radiusKm.round()} km',
+                    withDist.length == 1
+                        ? context.formatString(
+                            AppLocale.nearbyEventsCount,
+                            [withDist.length, _radiusKm.round()])
+                        : context.formatString(
+                            AppLocale.nearbyEventsCountPlural,
+                            [withDist.length, _radiusKm.round()]),
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -350,8 +356,6 @@ class _NearbyScreenState extends State<NearbyScreen> {
               ),
             ),
             const Divider(height: 1),
-
-            // List
             Expanded(
               child: ListView.separated(
                 padding: const EdgeInsets.all(16),
@@ -407,7 +411,6 @@ class _NearbyEventCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Icon circle
               Container(
                 width: 48,
                 height: 48,
@@ -418,8 +421,6 @@ class _NearbyEventCard extends StatelessWidget {
                 child: Icon(icon, color: color, size: 24),
               ),
               const SizedBox(width: 12),
-
-              // Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -459,10 +460,7 @@ class _NearbyEventCard extends StatelessWidget {
                   ],
                 ),
               ),
-
               const SizedBox(width: 8),
-
-              // Distance badge
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -499,12 +497,13 @@ class _NearbyEventCard extends StatelessWidget {
                         width: 52,
                         height: 52,
                         fit: BoxFit.cover,
-                        loadingBuilder: (_, child, p) =>
-                            p == null ? child : Container(
-                              width: 52,
-                              height: 52,
-                              color: Colors.grey[200],
-                            ),
+                        loadingBuilder: (_, child, p) => p == null
+                            ? child
+                            : Container(
+                                width: 52,
+                                height: 52,
+                                color: Colors.grey[200],
+                              ),
                       ),
                     ),
                   ],
