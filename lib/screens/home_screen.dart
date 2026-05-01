@@ -10,19 +10,26 @@ import 'search_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  static const _bgColor = Color(0xFF13132D);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF8EE),
+      backgroundColor: _bgColor,
       appBar: WesakAppBar(
         title: AppLocale.homeTitle.getString(context),
+        subtitle: '${AppLocale.homeGreeting.getString(context)} 🌟✨',
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: Colors.white),
+            icon: const Icon(Icons.search, color: Colors.white70),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const SearchScreen()),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.notifications_none, color: Colors.white70),
+            onPressed: () {},
           ),
         ],
       ),
@@ -33,20 +40,10 @@ class HomeScreen extends StatelessWidget {
           children: [
             _buildWelcomeBanner(context),
             const SizedBox(height: 28),
-            Padding(
-              padding: const EdgeInsets.only(left: 2, bottom: 14),
-              child: Text(
-                AppLocale.homeBrowseCategory.getString(context),
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1A0533),
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ),
+            _buildCategoryHeader(context),
+            const SizedBox(height: 14),
             _buildCategoryGrid(context),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -56,24 +53,28 @@ class HomeScreen extends StatelessWidget {
   Widget _buildWelcomeBanner(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1A0533), Color(0xFF6A0080)],
-        ),
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1A0533).withValues(alpha: 0.25),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        color: const Color(0xFF211F3F),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
       ),
       child: Row(
         children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: const Icon(
+              Icons.light_mode,
+              color: Color(0xFFFFD600),
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,55 +83,57 @@ class HomeScreen extends StatelessWidget {
                   AppLocale.homeGreeting.getString(context),
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 26,
+                    fontSize: 19,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.3,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
                   AppLocale.homeSubtitle.getString(context),
                   style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    height: 1.4,
+                    color: Colors.white54,
+                    fontSize: 12,
+                    height: 1.35,
                   ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const NearbyScreen()),
-                      ),
-                      child: _buildBadge(
-                        Icons.location_on,
-                        AppLocale.homeFindNearby.getString(context),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildBadge(
-                      Icons.verified,
-                      AppLocale.homeVerified.getString(context),
-                    ),
-                  ],
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
           const SizedBox(width: 12),
-          Container(
-            width: 62,
-            height: 62,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NearbyScreen()),
             ),
-            child: const Icon(
-              Icons.light_mode,
-              color: Color(0xFFFFCC40),
-              size: 34,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A6FE8),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.location_on,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    AppLocale.homeFindNearby.getString(context),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -138,29 +141,34 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBadge(IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: Colors.white, size: 12),
-          const SizedBox(width: 4),
-          Text(
-            label,
+  Widget _buildCategoryHeader(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          AppLocale.homeBrowseCategory.getString(context),
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+            letterSpacing: 0.5,
+          ),
+        ),
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SearchScreen()),
+          ),
+          child: Text(
+            AppLocale.homeSeeAll.getString(context),
             style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: FontWeight.w600,
+              color: Color(0xFF9B8FFF),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -169,22 +177,30 @@ class HomeScreen extends StatelessWidget {
       _Category(
         eventType: 'dansal',
         icon: Icons.restaurant,
-        gradientColors: [Color(0xFFBF360C), Color(0xFFFF6D00)],
+        glowColor: Color(0xFFE55B2D),
+        imagePath: 'assets/image_03.jpg',
+        imageAlignment: Alignment.centerLeft,
       ),
       _Category(
         eventType: 'thorana',
         icon: Icons.account_balance,
-        gradientColors: [Color(0xFF4A148C), Color(0xFF7B1FA2)],
+        glowColor: Color(0xFF4A7FE5),
+        imagePath: 'assets/image_02.png',
+        imageAlignment: Alignment.center,
       ),
       _Category(
         eventType: 'kudu',
         icon: Icons.light_mode,
-        gradientColors: [Color(0xFFF57F17), Color(0xFFFFD600)],
+        glowColor: Color(0xFFF5A623),
+        imagePath: 'assets/image_01.jpg',
+        imageAlignment: Alignment.topRight,
       ),
       _Category(
         eventType: 'geetha',
         icon: Icons.music_note,
-        gradientColors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
+        glowColor: Color(0xFF9B4FDB),
+        imagePath: 'assets/image_04.jpg',
+        imageAlignment: Alignment.bottomCenter,
       ),
     ];
 
@@ -192,9 +208,9 @@ class HomeScreen extends StatelessWidget {
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 14,
-      mainAxisSpacing: 14,
-      childAspectRatio: 1.05,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 0.88,
       children: categories
           .map((cat) => _buildCategoryCard(context, cat))
           .toList(),
@@ -203,6 +219,15 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildCategoryCard(BuildContext context, _Category cat) {
     final displayName = AppLocale.typeLabel(context, cat.eventType);
+    final description = AppLocale.typeDesc(context, cat.eventType);
+
+    const double stripHeight = 70.0;
+    const double circleSize = 40.0;
+    const double circleLeft = 12.0;
+    const Color kTitleColor = Color(0xFFFFD600);
+    const Color kStripColor = Color(0xFF211F3F);
+    const Color kSubtitle   = Color(0xFFA89EC0);
+
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
@@ -212,49 +237,79 @@ class HomeScreen extends StatelessWidget {
       ),
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: cat.gradientColors,
-          ),
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: cat.gradientColors.first.withValues(alpha: 0.22),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Stack(
+            fit: StackFit.expand,
             children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: Icon(cat.icon, color: Colors.white, size: 24),
+              // Column: image + dark strip
+              Column(
+                children: [
+                  Expanded(
+                    child: Image.asset(
+                      cat.imagePath,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      alignment: cat.imageAlignment,
+                    ),
+                  ),
+                  Container(
+                    height: stripHeight,
+                    width: double.infinity,
+                    color: kStripColor,
+                    padding: const EdgeInsets.only(
+                      left: circleLeft + circleSize + 10,
+                      right: 10,
+                      top: 8,
+                      bottom: 8,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          displayName,
+                          style: const TextStyle(
+                            color: kTitleColor,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.1,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          description,
+                          style: const TextStyle(
+                            color: kSubtitle,
+                            fontSize: 11,
+                            height: 1.3,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const Spacer(),
-              Text(
-                displayName,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.1,
+
+              // Icon circle — straddles the image / strip boundary
+              Positioned(
+                bottom: stripHeight - circleSize / 2,
+                left: circleLeft,
+                child: Container(
+                  width: circleSize,
+                  height: circleSize,
+                  decoration: BoxDecoration(
+                    color: cat.glowColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(cat.icon, color: Colors.white, size: 20),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                AppLocale.homeTapExplore.getString(context),
-                style: const TextStyle(color: Colors.white60, fontSize: 11),
               ),
             ],
           ),
@@ -267,11 +322,15 @@ class HomeScreen extends StatelessWidget {
 class _Category {
   final String eventType;
   final IconData icon;
-  final List<Color> gradientColors;
+  final Color glowColor;
+  final String imagePath;
+  final Alignment imageAlignment;
 
   const _Category({
     required this.eventType,
     required this.icon,
-    required this.gradientColors,
+    required this.glowColor,
+    required this.imagePath,
+    this.imageAlignment = Alignment.center,
   });
 }

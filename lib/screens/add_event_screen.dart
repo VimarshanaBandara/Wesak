@@ -42,31 +42,31 @@ class _AddEventScreenState extends State<AddEventScreen> {
   DateTime? _endDate;
   TimeOfDay? _startTime;
 
-  static const _dark = Color(0xFF1A0533);
-  static const _purple = Color(0xFF6A0080);
+  static const _dark    = Color(0xFF1A0533);
+  static const _purple  = Color(0xFF6A0080);
   static const _saffron = Color(0xFFE65100);
 
   static const _eventTypes = ['dansal', 'thorana', 'kudu', 'geetha'];
 
   static const _typeIcons = {
-    'dansal': Icons.restaurant,
+    'dansal':  Icons.restaurant,
     'thorana': Icons.account_balance,
-    'kudu': Icons.light_mode,
-    'geetha': Icons.music_note,
+    'kudu':    Icons.light_mode,
+    'geetha':  Icons.music_note,
   };
 
   static const _typeGradients = {
-    'dansal': [Color(0xFFBF360C), Color(0xFFFF6D00)],
+    'dansal':  [Color(0xFFBF360C), Color(0xFFFF6D00)],
     'thorana': [Color(0xFF4A148C), Color(0xFF7B1FA2)],
-    'kudu': [Color(0xFFF57F17), Color(0xFFFFD600)],
-    'geetha': [Color(0xFF0D47A1), Color(0xFF1976D2)],
+    'kudu':    [Color(0xFFF57F17), Color(0xFFFFD600)],
+    'geetha':  [Color(0xFF0D47A1), Color(0xFF1976D2)],
   };
 
   static const _typeColors = {
-    'dansal': Color(0xFFBF360C),
+    'dansal':  Color(0xFFBF360C),
     'thorana': Color(0xFF4A148C),
-    'kudu': Color(0xFFF57F17),
-    'geetha': Color(0xFF0D47A1),
+    'kudu':    Color(0xFFF57F17),
+    'geetha':  Color(0xFF0D47A1),
   };
 
   @override
@@ -81,7 +81,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   void _clearSchedule() {
     _startDate = null;
-    _endDate = null;
+    _endDate   = null;
     _startTime = null;
   }
 
@@ -131,7 +131,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     if (picked != null) setState(() => onPicked(picked));
   }
 
-  String _fmt(DateTime d) => DateFormat('dd MMM yyyy').format(d);
+  String _fmt(DateTime d)      => DateFormat('dd MMM yyyy').format(d);
   String _fmtTime(TimeOfDay t) => t.format(context);
 
   @override
@@ -141,8 +141,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     if (user == null) {
       return Scaffold(
         backgroundColor: const Color(0xFFFFF8EE),
-        appBar: WesakAppBar(
-            title: AppLocale.addTitle.getString(context)),
+        appBar: WesakAppBar(title: AppLocale.addTitle.getString(context)),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -154,16 +153,13 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   color: _purple.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child:
-                    const Icon(Icons.lock_outline, size: 40, color: _purple),
+                child: const Icon(Icons.lock_outline, size: 40, color: _purple),
               ),
               const SizedBox(height: 20),
               Text(
                 AppLocale.addSignInRequired.getString(context),
                 style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: _dark),
+                    fontSize: 18, fontWeight: FontWeight.bold, color: _dark),
               ),
               const SizedBox(height: 8),
               Text(
@@ -177,9 +173,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F7),
-      appBar: WesakAppBar(
-          title: AppLocale.addShareTitle.getString(context)),
+      backgroundColor: Colors.white,
+      appBar: WesakAppBar(title: AppLocale.addShareTitle.getString(context)),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,28 +186,24 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _sectionLabel(
-                        AppLocale.addChooseType.getString(context)),
+                    _sectionLabel(AppLocale.addChooseType.getString(context)),
                     const SizedBox(height: 12),
                     _buildTypeGrid(),
                     const SizedBox(height: 24),
 
                     if (_selectedType != null) ...[
-                      _sectionLabel(
-                          AppLocale.addSchedule.getString(context)),
+                      _sectionLabel(AppLocale.addSchedule.getString(context)),
                       const SizedBox(height: 12),
                       _buildScheduleCard(),
                       const SizedBox(height: 24),
                     ],
 
-                    _sectionLabel(
-                        AppLocale.addEventDetails.getString(context)),
+                    _sectionLabel(AppLocale.addEventDetails.getString(context)),
                     const SizedBox(height: 12),
                     _buildDetailsCard(),
                     const SizedBox(height: 24),
 
-                    _sectionLabel(
-                        AppLocale.addLocation.getString(context)),
+                    _sectionLabel(AppLocale.addLocation.getString(context)),
                     const SizedBox(height: 12),
                     _buildLocationButton(),
                     const SizedBox(height: 24),
@@ -226,15 +217,12 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Icon(Icons.info_outline,
-                            size: 13, color: Colors.grey[400]),
+                        Icon(Icons.info_outline, size: 13, color: Colors.grey[400]),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            AppLocale.addApprovalNote
-                                .getString(context),
-                            style: TextStyle(
-                                fontSize: 11, color: Colors.grey[400]),
+                            AppLocale.addApprovalNote.getString(context),
+                            style: TextStyle(fontSize: 11, color: Colors.grey[400]),
                           ),
                         ),
                       ],
@@ -250,7 +238,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  // ── Type grid ──────────────────────────────────────────────────────────────
+  // ── Type grid ───────────────────────────────────────────────────────────────
 
   Widget _buildTypeGrid() {
     return GridView.count(
@@ -261,7 +249,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
       mainAxisSpacing: 12,
       childAspectRatio: 2.0,
       children: _eventTypes.map((type) {
-        final selected = _selectedType == type;
+        final selected  = _selectedType == type;
         final gradients = _typeGradients[type]!;
         return GestureDetector(
           onTap: () => setState(() {
@@ -281,9 +269,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
               color: selected ? null : Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: selected
-                    ? Colors.transparent
-                    : Colors.grey.shade200,
+                color: selected ? Colors.transparent : Colors.grey.shade200,
                 width: 1.5,
               ),
               boxShadow: [
@@ -331,11 +317,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  // ── Schedule card ──────────────────────────────────────────────────────────
+  // ── Schedule card ───────────────────────────────────────────────────────────
 
   Widget _buildScheduleCard() {
     final typeColor = _typeColors[_selectedType] ?? _purple;
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -351,12 +336,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
       child: Column(
         children: [
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: typeColor.withValues(alpha: 0.07),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: Row(
               children: [
@@ -383,20 +366,20 @@ class _AddEventScreenState extends State<AddEventScreen> {
   }
 
   String _scheduleTitle() => switch (_selectedType) {
-        'dansal' => AppLocale.scheduleDansal.getString(context),
-        'thorana' => AppLocale.scheduleThorana.getString(context),
-        'kudu' => AppLocale.scheduleKudu.getString(context),
-        'geetha' => AppLocale.scheduleGeetha.getString(context),
-        _ => AppLocale.addSchedule.getString(context),
-      };
+    'dansal'  => AppLocale.scheduleDansal.getString(context),
+    'thorana' => AppLocale.scheduleThorana.getString(context),
+    'kudu'    => AppLocale.scheduleKudu.getString(context),
+    'geetha'  => AppLocale.scheduleGeetha.getString(context),
+    _         => AppLocale.addSchedule.getString(context),
+  };
 
   Widget _buildScheduleFields(Color typeColor) {
     return switch (_selectedType) {
-      'dansal' => _buildDansalSchedule(typeColor),
+      'dansal'  => _buildDansalSchedule(typeColor),
       'thorana' => _buildDateRangeSchedule(typeColor),
-      'kudu' => _buildDateRangeSchedule(typeColor),
-      'geetha' => _buildGeethaSchedule(typeColor),
-      _ => const SizedBox.shrink(),
+      'kudu'    => _buildDateRangeSchedule(typeColor),
+      'geetha'  => _buildGeethaSchedule(typeColor),
+      _         => const SizedBox.shrink(),
     };
   }
 
@@ -440,14 +423,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
             labelText: AppLocale.addFoodLabel.getString(context),
             hintText: AppLocale.addFoodHint.getString(context),
             labelStyle: TextStyle(fontSize: 13, color: typeColor),
-            hintStyle:
-                TextStyle(fontSize: 12, color: Colors.grey[400]),
-            prefixIcon:
-                Icon(Icons.set_meal, size: 20, color: typeColor),
+            hintStyle: TextStyle(fontSize: 12, color: Colors.grey[400]),
+            prefixIcon: Icon(Icons.set_meal, size: 20, color: typeColor),
             filled: true,
             fillColor: typeColor.withValues(alpha: 0.05),
-            contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(color: Colors.grey.shade300),
@@ -479,9 +459,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
               title: AppLocale.addStartDate.getString(context),
               onPicked: (d) {
                 _startDate = d;
-                if (_endDate != null && _endDate!.isBefore(d)) {
-                  _endDate = null;
-                }
+                if (_endDate != null && _endDate!.isBefore(d)) _endDate = null;
               },
             ),
           ),
@@ -549,14 +527,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: filled
-              ? typeColor.withValues(alpha: 0.07)
-              : Colors.grey.shade50,
+          color: filled ? typeColor.withValues(alpha: 0.07) : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: filled
-                ? typeColor.withValues(alpha: 0.4)
-                : Colors.grey.shade300,
+            color: filled ? typeColor.withValues(alpha: 0.4) : Colors.grey.shade300,
             width: filled ? 1.5 : 1,
           ),
         ),
@@ -565,9 +539,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
           children: [
             Row(
               children: [
-                Icon(icon,
-                    size: 14,
-                    color: filled ? typeColor : Colors.grey),
+                Icon(icon, size: 14, color: filled ? typeColor : Colors.grey),
                 const SizedBox(width: 5),
                 Text(
                   label,
@@ -581,13 +553,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
             ),
             const SizedBox(height: 5),
             Text(
-              filled
-                  ? value
-                  : AppLocale.addTapToPick.getString(context),
+              filled ? value : AppLocale.addTapToPick.getString(context),
               style: TextStyle(
                 fontSize: 13,
-                fontWeight:
-                    filled ? FontWeight.bold : FontWeight.normal,
+                fontWeight: filled ? FontWeight.bold : FontWeight.normal,
                 color: filled ? _dark : Colors.grey[400],
               ),
             ),
@@ -597,7 +566,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  // ── Details card ───────────────────────────────────────────────────────────
+  // ── Details card ────────────────────────────────────────────────────────────
 
   Widget _buildDetailsCard() {
     return Container(
@@ -656,11 +625,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  Widget _divider() => Divider(
-        height: 1,
-        indent: 52,
-        color: Colors.grey.shade100,
-      );
+  Widget _divider() => Divider(height: 1, indent: 52, color: Colors.grey.shade100);
 
   Widget _buildInlineField({
     required TextEditingController controller,
@@ -677,11 +642,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.only(
-            left: 14,
-            right: 14,
-            top: isFirst ? 20 : 16,
-          ),
+          padding: EdgeInsets.only(left: 14, right: 14, top: isFirst ? 20 : 16),
           child: Icon(icon, size: 20, color: _purple),
         ),
         Expanded(
@@ -693,10 +654,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
             decoration: InputDecoration(
               labelText: label,
               hintText: hint,
-              labelStyle: const TextStyle(
-                  fontSize: 13, color: Color(0xFF6A0080)),
-              hintStyle:
-                  TextStyle(fontSize: 13, color: Colors.grey[350]),
+              labelStyle: const TextStyle(fontSize: 13, color: Color(0xFF6A0080)),
+              hintStyle: TextStyle(fontSize: 13, color: Colors.grey[350]),
               filled: false,
               contentPadding: EdgeInsets.only(
                 right: 16,
@@ -716,7 +675,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  // ── Location ───────────────────────────────────────────────────────────────
+  // ── Location ────────────────────────────────────────────────────────────────
 
   Widget _buildLocationButton() {
     final picked = _selectedLocation != null;
@@ -724,22 +683,18 @@ class _AddEventScreenState extends State<AddEventScreen> {
       onTap: () async {
         final result = await Navigator.push<LatLng>(
           context,
-          MaterialPageRoute(
-              builder: (_) => const LocationPickerScreen()),
+          MaterialPageRoute(builder: (_) => const LocationPickerScreen()),
         );
         if (result != null) setState(() => _selectedLocation = result);
       },
       child: Container(
         width: double.infinity,
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: picked
-                ? Colors.green.shade400
-                : Colors.transparent,
+            color: picked ? Colors.green.shade400 : Colors.transparent,
             width: 1.5,
           ),
           boxShadow: [
@@ -758,14 +713,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: picked
-                      ? [
-                          Colors.green.shade400,
-                          Colors.green.shade600
-                        ]
-                      : [
-                          const Color(0xFFE65100),
-                          const Color(0xFFBF360C)
-                        ],
+                      ? [Colors.green.shade400, Colors.green.shade600]
+                      : [const Color(0xFFE65100), const Color(0xFFBF360C)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -789,9 +738,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: picked
-                          ? Colors.green.shade700
-                          : _dark,
+                      color: picked ? Colors.green.shade700 : _dark,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -800,8 +747,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                         ? '${_selectedLocation!.latitude.toStringAsFixed(5)}, '
                             '${_selectedLocation!.longitude.toStringAsFixed(5)}'
                         : AppLocale.addTapMap.getString(context),
-                    style: TextStyle(
-                        fontSize: 12, color: Colors.grey[500]),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                   ),
                 ],
               ),
@@ -813,7 +759,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  // ── Photo grid ─────────────────────────────────────────────────────────────
+  // ── Photo grid ──────────────────────────────────────────────────────────────
 
   Widget _buildPhotoGrid() {
     return Wrap(
@@ -829,25 +775,21 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 borderRadius: BorderRadius.circular(12),
                 child: Image.file(
                   File(photo.path),
-                  width: 90,
-                  height: 90,
+                  width: 90, height: 90,
                   fit: BoxFit.cover,
                 ),
               ),
               Positioned(
-                top: 4,
-                right: 4,
+                top: 4, right: 4,
                 child: GestureDetector(
-                  onTap: () => setState(
-                      () => _selectedPhotos.removeAt(index)),
+                  onTap: () => setState(() => _selectedPhotos.removeAt(index)),
                   child: Container(
                     padding: const EdgeInsets.all(3),
                     decoration: const BoxDecoration(
                       color: Colors.red,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.close,
-                        color: Colors.white, size: 12),
+                    child: const Icon(Icons.close, color: Colors.white, size: 12),
                   ),
                 ),
               ),
@@ -880,13 +822,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   Widget _photoTile(IconData icon, Color color, String label) {
     return Container(
-      width: 90,
-      height: 90,
+      width: 90, height: 90,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: color.withValues(alpha: 0.3), width: 1.5),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -900,17 +840,16 @@ class _AddEventScreenState extends State<AddEventScreen> {
         children: [
           Icon(icon, color: color, size: 26),
           const SizedBox(height: 4),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 11,
-                  color: color,
-                  fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );
   }
 
-  // ── Submit ─────────────────────────────────────────────────────────────────
+  // ── Submit ──────────────────────────────────────────────────────────────────
 
   Widget _buildSubmitButton() {
     return GestureDetector(
@@ -944,14 +883,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
           children: [
             if (_isSubmitting)
               const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Colors.white),
+                width: 18, height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
               )
             else
-              const Icon(Icons.send_rounded,
-                  color: Colors.white, size: 20),
+              const Icon(Icons.send_rounded, color: Colors.white, size: 20),
             const SizedBox(width: 10),
             Text(
               _isSubmitting
@@ -970,7 +906,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
     );
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  // ── Helpers ─────────────────────────────────────────────────────────────────
 
   Widget _sectionLabel(String text) {
     return Text(
@@ -987,11 +923,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
   Future<void> _pickFromGallery() async {
     try {
       final images = await _storageService.pickImages();
-      final toAdd =
-          images.take(5 - _selectedPhotos.length).toList();
-      if (toAdd.isNotEmpty) {
-        setState(() => _selectedPhotos.addAll(toAdd));
-      }
+      final toAdd  = images.take(5 - _selectedPhotos.length).toList();
+      if (toAdd.isNotEmpty) setState(() => _selectedPhotos.addAll(toAdd));
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -1012,83 +945,49 @@ class _AddEventScreenState extends State<AddEventScreen> {
     }
   }
 
-  // ── Validation & submit ────────────────────────────────────────────────────
+  // ── Validation & submit ─────────────────────────────────────────────────────
 
   bool _validateSchedule() {
     switch (_selectedType) {
       case 'dansal':
-        if (_startDate == null) {
-          _showSnack(AppLocale.validateDansalDate.getString(context));
-          return false;
-        }
-        if (_startTime == null) {
-          _showSnack(AppLocale.validateDansalTime.getString(context));
-          return false;
-        }
+        if (_startDate == null) { _showSnack(AppLocale.validateDansalDate.getString(context)); return false; }
+        if (_startTime == null) { _showSnack(AppLocale.validateDansalTime.getString(context)); return false; }
       case 'thorana':
-        if (_startDate == null) {
-          _showSnack(AppLocale.validateThoranaStart.getString(context));
-          return false;
-        }
-        if (_endDate == null) {
-          _showSnack(AppLocale.validateThoranaEnd.getString(context));
-          return false;
-        }
+        if (_startDate == null) { _showSnack(AppLocale.validateThoranaStart.getString(context)); return false; }
+        if (_endDate == null)   { _showSnack(AppLocale.validateThoranaEnd.getString(context));   return false; }
       case 'kudu':
-        if (_startDate == null) {
-          _showSnack(AppLocale.validateKuduStart.getString(context));
-          return false;
-        }
-        if (_endDate == null) {
-          _showSnack(AppLocale.validateKuduEnd.getString(context));
-          return false;
-        }
+        if (_startDate == null) { _showSnack(AppLocale.validateKuduStart.getString(context)); return false; }
+        if (_endDate == null)   { _showSnack(AppLocale.validateKuduEnd.getString(context));   return false; }
       case 'geetha':
-        if (_startDate == null) {
-          _showSnack(AppLocale.validateGeethaDate.getString(context));
-          return false;
-        }
-        if (_startTime == null) {
-          _showSnack(AppLocale.validateGeethaTime.getString(context));
-          return false;
-        }
+        if (_startDate == null) { _showSnack(AppLocale.validateGeethaDate.getString(context)); return false; }
+        if (_startTime == null) { _showSnack(AppLocale.validateGeethaTime.getString(context)); return false; }
     }
     return true;
   }
 
   void _showSnack(String msg) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   DateTime _buildStartDateTime() {
     final date = _startDate ?? DateTime.now();
     if (_startTime != null) {
-      return DateTime(date.year, date.month, date.day,
-          _startTime!.hour, _startTime!.minute);
+      return DateTime(date.year, date.month, date.day, _startTime!.hour, _startTime!.minute);
     }
     return DateTime(date.year, date.month, date.day);
   }
 
   DateTime _buildEndDateTime() {
     if (_endDate != null) {
-      return DateTime(
-          _endDate!.year, _endDate!.month, _endDate!.day, 23, 59);
+      return DateTime(_endDate!.year, _endDate!.month, _endDate!.day, 23, 59);
     }
-    final start = _buildStartDateTime();
-    return start.add(const Duration(hours: 8));
+    return _buildStartDateTime().add(const Duration(hours: 8));
   }
 
   Future<void> _submitForm() async {
-    if (_selectedType == null) {
-      _showSnack(AppLocale.addSelectType.getString(context));
-      return;
-    }
-    if (!_validateSchedule()) return;
-    if (_selectedLocation == null) {
-      _showSnack(AppLocale.addPickLocation.getString(context));
-      return;
-    }
+    if (_selectedType == null) { _showSnack(AppLocale.addSelectType.getString(context)); return; }
+    if (!_validateSchedule())    return;
+    if (_selectedLocation == null) { _showSnack(AppLocale.addPickLocation.getString(context)); return; }
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -1105,30 +1004,29 @@ class _AddEventScreenState extends State<AddEventScreen> {
           _selectedPhotos,
           onProgress: (uploaded, total) {
             if (mounted) {
-              setState(() => _submitStatus = context.formatString(
-                  AppLocale.addUploading, [uploaded, total]));
+              setState(() => _submitStatus =
+                  context.formatString(AppLocale.addUploading, [uploaded, total]));
             }
           },
         );
       }
 
       final event = EventModel(
-        id: '',
-        name: _nameController.text.trim(),
-        type: _selectedType!,
+        id:          '',
+        name:        _nameController.text.trim(),
+        type:        _selectedType!,
         description: _descriptionController.text.trim(),
-        lat: _selectedLocation!.latitude,
-        lng: _selectedLocation!.longitude,
-        city: _cityController.text.trim(),
-        startTime: _buildStartDateTime(),
-        endTime: _buildEndDateTime(),
-        photos: photoUrls,
-        addedBy: user.uid,
-        foodItems: _foodItemsController.text.trim(),
+        lat:         _selectedLocation!.latitude,
+        lng:         _selectedLocation!.longitude,
+        city:        _cityController.text.trim(),
+        startTime:   _buildStartDateTime(),
+        endTime:     _buildEndDateTime(),
+        photos:      photoUrls,
+        addedBy:     user.uid,
+        foodItems:   _foodItemsController.text.trim(),
       );
 
-      setState(
-          () => _submitStatus = AppLocale.addSaving.getString(context));
+      setState(() => _submitStatus = AppLocale.addSaving.getString(context));
       await _firestoreService.addEvent(event);
 
       if (mounted) {
@@ -1139,28 +1037,24 @@ class _AddEventScreenState extends State<AddEventScreen> {
         _contactController.clear();
         _foodItemsController.clear();
         setState(() {
-          _selectedType = null;
+          _selectedType     = null;
           _selectedLocation = null;
-          _selectedPhotos = [];
-          _isSubmitting = false;
-          _submitStatus = '';
+          _selectedPhotos   = [];
+          _isSubmitting     = false;
+          _submitStatus     = '';
           _clearSchedule();
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text(AppLocale.addSuccess.getString(context)),
+            content: Text(AppLocale.addSuccess.getString(context)),
             backgroundColor: Colors.green,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-          _submitStatus = '';
-        });
+        setState(() { _isSubmitting = false; _submitStatus = ''; });
         _showSnack('Failed to submit: $e');
       }
     }

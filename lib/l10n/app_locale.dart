@@ -25,6 +25,7 @@ class AppLocale {
   static const String homeVerified = 'home_verified';
   static const String homeBrowseCategory = 'home_browse_category';
   static const String homeTapExplore = 'home_tap_explore';
+  static const String homeSeeAll = 'home_see_all';
 
   // ── Event types ───────────────────────────────────────────────────────────
   static const String typeDansal = 'type_dansal';
@@ -258,6 +259,7 @@ class AppLocale {
     homeVerified: 'Verified',
     homeBrowseCategory: 'Browse by Category',
     homeTapExplore: 'Tap to explore',
+    homeSeeAll: 'See all →',
 
     typeDansal: 'Dansal',
     typeThorana: 'Thorana',
@@ -447,6 +449,7 @@ class AppLocale {
     homeVerified: 'සනාථ',
     homeBrowseCategory: 'වර්ගය අනුව සොයන්න',
     homeTapExplore: 'ස්පර්ශ කරන්න',
+    homeSeeAll: 'සියලුම →',
 
     typeDansal: 'දන්සල්',
     typeThorana: 'තොරණ',
