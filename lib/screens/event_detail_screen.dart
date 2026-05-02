@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart' show Share;
@@ -7,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/app_locale.dart';
 import '../models/event_model.dart';
+import '../widgets/wesak_app_bar.dart';
 
 enum _EventStatus { open, upcoming, ended }
 
@@ -53,166 +53,90 @@ class EventDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF3EFF8),
-      body: CustomScrollView(
-        slivers: [
-          _buildSliverAppBar(context),
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 16),
-                _buildTimeCard(),
-                if (event.rating > 0) ...[
-                  const SizedBox(height: 12),
-                  _buildRatingCard(context),
-                ],
-                if (event.foodItems.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  _buildFoodItemsCard(),
-                ],
-                if (event.photos.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  _buildPhotosSection(context),
-                ],
-                if (event.description.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  _buildDescriptionCard(context),
-                ],
-                const SizedBox(height: 100),
-              ],
-            ),
+      appBar: WesakAppBar(
+        title: event.name,
+        showBackButton: true,
+        actions: [
+          IconButton(
+            onPressed: () => _shareEvent(context),
+            icon: const Icon(Icons.share_rounded, color: Colors.white),
           ),
         ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildMainInfo(context),
+            const SizedBox(height: 12),
+            _buildTimeCard(),
+            if (event.rating > 0) ...[
+              const SizedBox(height: 12),
+              _buildRatingCard(context),
+            ],
+            if (event.foodItems.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _buildFoodItemsCard(),
+            ],
+            if (event.photos.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _buildPhotosSection(context),
+            ],
+            if (event.description.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _buildDescriptionCard(context),
+            ],
+          ],
+        ),
       ),
       bottomNavigationBar: _buildBottomBar(context),
     );
   }
 
-  // ── Sliver hero app bar ────────────────────────────────────────────────────
+  // ── Main info ──────────────────────────────────────────────────────────────
 
-  Widget _buildSliverAppBar(BuildContext context) {
-    final hasPhoto = event.photos.isNotEmpty;
-
-    return SliverAppBar(
-      expandedHeight: 260,
-      pinned: true,
-      backgroundColor: _typeGradient.first,
-      systemOverlayStyle: SystemUiOverlayStyle.light,
-      automaticallyImplyLeading: false,
-      leading: Padding(
-        padding: const EdgeInsets.all(8),
-        child: _CircleButton(
-          icon: Icons.arrow_back_rounded,
-          onTap: () => Navigator.pop(context),
-        ),
-      ),
-      actions: [
-        Padding(
-          padding: const EdgeInsets.all(8),
-          child: _CircleButton(
-            icon: Icons.share_rounded,
-            onTap: () => _shareEvent(context),
+  Widget _buildMainInfo(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              _typeBadge(context),
+              if (event.verified) _verifiedBadge(),
+              _statusBadge(context),
+            ],
           ),
-        ),
-      ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Background: first photo or gradient
-            if (hasPhoto)
-              Image.network(
-                event.photos.first,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => _gradientBox(),
-              )
-            else
-              _gradientBox(),
-            // Bottom gradient overlay for text readability
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.65),
-                    ],
-                    stops: const [0.35, 1.0],
-                  ),
+          if (event.city.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.location_on_rounded, size: 13, color: _typeColor),
+                const SizedBox(width: 3),
+                Text(
+                  event.city,
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500),
                 ),
-              ),
-            ),
-            // Event info overlay at bottom of hero
-            Positioned(
-              bottom: 16,
-              left: 16,
-              right: 16,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    children: [
-                      _typeBadge(context),
-                      if (event.verified) _verifiedBadge(),
-                      _statusBadge(context),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    event.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      height: 1.2,
-                      shadows: [Shadow(blurRadius: 6, color: Colors.black45)],
-                    ),
-                  ),
-                  if (event.city.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on_rounded,
-                            size: 13, color: Colors.white70),
-                        const SizedBox(width: 3),
-                        Text(
-                          event.city,
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
+              ],
             ),
           ],
-        ),
+        ],
       ),
     );
   }
 
-  Widget _gradientBox() => Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: _typeGradient,
-          ),
-        ),
-      );
-
   Widget _typeBadge(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.2),
+          gradient: LinearGradient(colors: _typeGradient),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -234,42 +158,41 @@ class EventDetailScreen extends StatelessWidget {
   Widget _verifiedBadge() => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.green.withValues(alpha: 0.2),
+          color: Colors.green.shade50,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.green.withValues(alpha: 0.5)),
+          border: Border.all(color: Colors.green.shade300),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.verified_rounded,
-                size: 11, color: Colors.greenAccent.shade100),
+            Icon(Icons.verified_rounded, size: 11, color: Colors.green.shade600),
             const SizedBox(width: 3),
             Text(
               'Verified',
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: Colors.greenAccent.shade100),
+                  color: Colors.green.shade700),
             ),
           ],
         ),
       );
 
   Widget _statusBadge(BuildContext context) {
-    late final Color color;
-    late final String label;
-    late final IconData icon;
+    final Color color;
+    final String label;
+    final IconData icon;
 
     if (_status == _EventStatus.open) {
-      color = Colors.greenAccent;
+      color = Colors.green;
       label = AppLocale.detailOpenNow.getString(context);
       icon = Icons.radio_button_checked_rounded;
     } else if (_status == _EventStatus.upcoming) {
-      color = Colors.orangeAccent;
+      color = Colors.orange;
       label = AppLocale.detailUpcoming.getString(context);
       icon = Icons.schedule_rounded;
     } else {
-      color = Colors.white54;
+      color = Colors.grey;
       label = AppLocale.detailEnded.getString(context);
       icon = Icons.check_circle_outline_rounded;
     }
@@ -277,9 +200,9 @@ class EventDetailScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -385,8 +308,8 @@ class EventDetailScreen extends StatelessWidget {
                 color: Colors.amber.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.star_rounded,
-                  size: 14, color: Colors.amber),
+              child:
+                  const Icon(Icons.star_rounded, size: 14, color: Colors.amber),
             ),
             const SizedBox(width: 10),
             Text(
@@ -505,7 +428,7 @@ class EventDetailScreen extends StatelessWidget {
     );
   }
 
-  // ── Photos section (horizontal scroll) ────────────────────────────────────
+  // ── Photos section ─────────────────────────────────────────────────────────
 
   Widget _buildPhotosSection(BuildContext context) {
     return Column(
@@ -637,15 +560,15 @@ class EventDetailScreen extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 event.description,
-                style:
-                    TextStyle(fontSize: 13, color: Colors.grey[700], height: 1.6),
+                style: TextStyle(
+                    fontSize: 13, color: Colors.grey[700], height: 1.6),
               ),
             ],
           ),
         ),
       );
 
-  // ── Sticky bottom bar ──────────────────────────────────────────────────────
+  // ── Bottom bar ─────────────────────────────────────────────────────────────
 
   Widget _buildBottomBar(BuildContext context) => SafeArea(
         child: Container(
@@ -705,11 +628,9 @@ class EventDetailScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: _typeColor.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
-                    border:
-                        Border.all(color: _typeColor.withValues(alpha: 0.2)),
+                    border: Border.all(color: _typeColor.withValues(alpha: 0.2)),
                   ),
-                  child:
-                      Icon(Icons.share_rounded, color: _typeColor, size: 20),
+                  child: Icon(Icons.share_rounded, color: _typeColor, size: 20),
                 ),
               ),
             ],
@@ -748,31 +669,6 @@ class EventDetailScreen extends StatelessWidget {
       MaterialPageRoute(
         builder: (_) =>
             _PhotoViewer(photos: event.photos, initialIndex: initialIndex),
-      ),
-    );
-  }
-}
-
-// ── Circle button for hero overlay ────────────────────────────────────────────
-
-class _CircleButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _CircleButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.35),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: Colors.white, size: 18),
       ),
     );
   }
