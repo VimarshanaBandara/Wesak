@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../config/app_config.dart';
 import '../l10n/app_locale.dart';
+import '../services/map/map_provider.dart';
 import '../widgets/wesak_app_bar.dart';
 
 /// Map ෙකන් location tap කරලා LatLng return කරනවා
@@ -17,12 +18,13 @@ class LocationPickerScreen extends StatefulWidget {
 }
 
 class _LocationPickerScreenState extends State<LocationPickerScreen> {
-  final MapController _mapController = MapController();
-
   LatLng? _selectedLocation;
   LatLng _center = const LatLng(7.8731, 80.7718);
   double _zoom = 8.0;
   bool _loadingGps = false;
+
+  // Provider ගෙන් onMapReady callback ෙකදී set වෙනවා
+  MapCameraController? _cameraController;
 
   @override
   void initState() {
@@ -59,7 +61,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           _zoom = 15.0;
           _loadingGps = false;
         });
-        _mapController.move(currentLatLng, 15.0);
+        _cameraController?.move(currentLatLng, 15.0);
       }
     } catch (_) {
       if (mounted) setState(() => _loadingGps = false);
@@ -89,37 +91,13 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       ),
       body: Stack(
         children: [
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              initialCenter: _center,
-              initialZoom: _zoom,
-              onTap: (_, latLng) {
-                setState(() => _selectedLocation = latLng);
-              },
-            ),
-            children: [
-              TileLayer(
-                urlTemplate:
-                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.vmmobile.wesak',
-              ),
-              if (_selectedLocation != null)
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: _selectedLocation!,
-                      width: 48,
-                      height: 48,
-                      child: const Icon(
-                        Icons.location_on,
-                        color: Colors.red,
-                        size: 48,
-                      ),
-                    ),
-                  ],
-                ),
-            ],
+          AppConfig.mapProvider.buildLocationPicker(
+            initialCenter: _center,
+            initialZoom: _zoom,
+            selectedLocation: _selectedLocation,
+            onLocationSelected: (latLng) =>
+                setState(() => _selectedLocation = latLng),
+            onMapReady: (c) => _cameraController = c,
           ),
 
           // Instruction banner

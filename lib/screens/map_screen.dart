@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../config/app_config.dart';
@@ -24,8 +23,10 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final _firestoreService = FirestoreService();
-  final _mapController = MapController();
   final _searchController = TextEditingController();
+
+  // Provider ගෙන් onMapReady callback ෙකදී set වෙනවා
+  MapCameraController? _cameraController;
 
   late final Stream<List<EventModel>> _eventsStream;
 
@@ -56,7 +57,6 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   void dispose() {
-    _mapController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -92,7 +92,7 @@ class _MapScreenState extends State<MapScreen> {
 
       final lat = double.parse(results[0]['lat'] as String);
       final lng = double.parse(results[0]['lon'] as String);
-      _mapController.move(LatLng(lat, lng), 13.0);
+      _cameraController?.move(LatLng(lat, lng), 13.0);
       setState(() => _searching = false);
     } catch (_) {
       setState(() {
@@ -127,7 +127,7 @@ class _MapScreenState extends State<MapScreen> {
                   initialZoom: 8,
                   markers: const [],
                   onMarkerTap: (_) {},
-                  mapController: _mapController,
+                  onMapReady: (c) => _cameraController = c,
                 ),
                 Positioned(
                   top: 16,
@@ -171,7 +171,7 @@ class _MapScreenState extends State<MapScreen> {
                 onMarkerTap: (marker) {
                   _showEventDetail(context, marker, filtered);
                 },
-                mapController: _mapController,
+                onMapReady: (c) => _cameraController = c,
               ),
 
               // Top overlay: search + filter chips

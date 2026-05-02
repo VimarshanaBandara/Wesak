@@ -72,8 +72,8 @@ dependencies:
   # Localization - Sinhala + English language support
   flutter_localization: ^0.2.2
 
-  # Google Maps - disabled for now, activate in app_config.dart when ready
-  # google_maps_flutter: ^2.5.0
+  # Google Maps - active map provider
+  google_maps_flutter: ^2.5.0
 
 dev_dependencies:
   flutter_test:

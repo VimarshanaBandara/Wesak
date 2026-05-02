@@ -3,16 +3,14 @@ import '../services/map/osm_map_provider.dart';
 import '../services/map/google_map_provider.dart';
 
 /// App-wide configuration
-/// Map provider switch, feature flags, etc.
 class AppConfig {
-  // Map provider toggle
-  // false = OpenStreetMap (free, default)
-  // true  = Google Maps (better quality, requires API key setup)
-  // Switch කරන්නේ: google_map_provider.dart ේ steps follow කරලා මේ true කරන්න
-  static const bool useGoogleMaps = false;
+  // true = Google Maps | false = OpenStreetMap (free fallback)
+  static const bool useGoogleMaps = true;
 
-  /// Active map provider - useGoogleMaps flag eka අනුව return කරනවා
+  // Singleton — same provider instance reuse කරනවා (internal controllers persist)
+  static MapProvider? _provider;
   static MapProvider get mapProvider {
-    return useGoogleMaps ? GoogleMapProvider() : OSMMapProvider();
+    _provider ??= useGoogleMaps ? GoogleMapProvider() : OSMMapProvider();
+    return _provider!;
   }
 }
