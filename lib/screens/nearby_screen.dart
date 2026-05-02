@@ -385,134 +385,179 @@ class _NearbyEventCard extends StatelessWidget {
   const _NearbyEventCard({required this.event, required this.distance});
 
   static const Map<String, IconData> _typeIcons = {
-    'dansal': Icons.restaurant,
-    'thorana': Icons.account_balance,
-    'kudu': Icons.light_mode,
-    'geetha': Icons.music_note,
+    'dansal': Icons.soup_kitchen_rounded,
+    'thorana': Icons.account_balance_rounded,
+    'kudu': Icons.wb_incandescent_rounded,
+    'geetha': Icons.library_music_rounded,
   };
+
+  static const Map<String, List<Color>> _typeGradients = {
+    'dansal': [Color(0xFFE64A19), Color(0xFF8D1900)],
+    'thorana': [Color(0xFF8E24AA), Color(0xFF1A0533)],
+    'kudu': [Color(0xFFFF7043), Color(0xFFBF360C)],
+    'geetha': [Color(0xFF1565C0), Color(0xFF002171)],
+  };
+
   static const Map<String, Color> _typeColors = {
     'dansal': Color(0xFFBF360C),
-    'thorana': Color(0xFF4A148C),
-    'kudu': Color(0xFFF57F17),
+    'thorana': Color(0xFF6A1B9A),
+    'kudu': Color(0xFFE65100),
     'geetha': Color(0xFF0D47A1),
   };
 
   @override
   Widget build(BuildContext context) {
-    final color = _typeColors[event.type] ?? Colors.grey;
-    final icon = _typeIcons[event.type] ?? Icons.event;
+    final color = _typeColors[event.type] ?? const Color(0xFF1A0533);
+    final gradients = _typeGradients[event.type] ??
+        [const Color(0xFF1A0533), const Color(0xFF4A148C)];
+    final icon = _typeIcons[event.type] ?? Icons.event_rounded;
+    final hasPhoto = event.photos.isNotEmpty;
+    final typeLabel = AppLocale.typeLabel(context, event.type);
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => EventCard.showDetail(context, event),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
+    return GestureDetector(
+      onTap: () => EventCard.showDetail(context, event),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.07),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: IntrinsicHeight(
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      event.name,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    if (event.city.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on,
-                              size: 13, color: Colors.grey),
-                          const SizedBox(width: 3),
-                          Text(
-                            event.city,
-                            style: const TextStyle(
-                                color: Colors.grey, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ],
-                    if (event.description.isNotEmpty) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        event.description,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            color: Colors.grey[600], fontSize: 12),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1A0533),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.near_me,
-                            size: 11, color: Colors.white70),
-                        const SizedBox(width: 3),
-                        Text(
-                          distance,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (event.photos.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
+              // Left — photo or icon placeholder
+              ClipRRect(
+                borderRadius: const BorderRadius.horizontal(
+                    left: Radius.circular(18)),
+                child: hasPhoto
+                    ? Image.network(
                         event.photos.first,
-                        width: 52,
-                        height: 52,
+                        width: 72,
                         fit: BoxFit.cover,
                         loadingBuilder: (_, child, p) => p == null
                             ? child
-                            : Container(
-                                width: 52,
-                                height: 52,
-                                color: Colors.grey[200],
-                              ),
+                            : _placeholder(gradients, icon),
+                        errorBuilder: (_, _, _) =>
+                            _placeholder(gradients, icon),
+                      )
+                    : _placeholder(gradients, icon),
+              ),
+
+              // Content
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Type badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          typeLabel,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: color,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ],
+                      const SizedBox(height: 5),
+
+                      // Event name
+                      Text(
+                        event.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A0533),
+                          height: 1.3,
+                        ),
+                      ),
+
+                      if (event.city.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(Icons.location_on_rounded,
+                                size: 12, color: Colors.grey[400]),
+                            const SizedBox(width: 2),
+                            Expanded(
+                              child: Text(
+                                event.city,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    color: Colors.grey[500], fontSize: 11),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+
+                      const SizedBox(height: 7),
+
+                      // Distance badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: gradients),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.near_me_rounded,
+                                size: 10, color: Colors.white),
+                            const SizedBox(width: 3),
+                            Text(
+                              distance,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _placeholder(List<Color> gradients, IconData icon) {
+    return Container(
+      width: 72,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: gradients,
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 28),
     );
   }
 }

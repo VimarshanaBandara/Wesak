@@ -58,25 +58,25 @@ class EventDetailScreen extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 48),
+        padding: const EdgeInsets.only(bottom: 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildMainInfo(context),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             _buildTimeCard(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             _buildActionButtons(context),
             if (event.foodItems.isNotEmpty) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _buildFoodItemsCard(),
             ],
             if (hasPhotos) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               _buildPhotosSection(context),
             ],
             if (event.description.isNotEmpty) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               _buildDescriptionCard(context),
             ],
           ],
@@ -89,7 +89,7 @@ class EventDetailScreen extends StatelessWidget {
 
   Widget _buildMainInfo(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -97,31 +97,31 @@ class EventDetailScreen extends StatelessWidget {
             children: [
               _typeBadge(context),
               if (event.verified) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 _verifiedBadge(),
               ],
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           Text(
             event.name,
             style: const TextStyle(
-              fontSize: 28,
+              fontSize: 20,
               fontWeight: FontWeight.w800,
               color: Color(0xFF1A0533),
               height: 1.2,
             ),
           ),
           if (event.city.isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.location_on_rounded, size: 16, color: _typeColor),
-                const SizedBox(width: 4),
+                Icon(Icons.location_on_rounded, size: 13, color: _typeColor),
+                const SizedBox(width: 3),
                 Text(
                   event.city,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 12,
                     color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
                   ),
@@ -136,21 +136,21 @@ class EventDetailScreen extends StatelessWidget {
 
   Widget _typeBadge(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: _typeGradient),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(_typeIcons[event.type] ?? Icons.event,
-              size: 13, color: Colors.white),
-          const SizedBox(width: 5),
+              size: 11, color: Colors.white),
+          const SizedBox(width: 4),
           Text(
             AppLocale.typeLabel(context, event.type),
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
@@ -162,21 +162,21 @@ class EventDetailScreen extends StatelessWidget {
 
   Widget _verifiedBadge() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.green.shade50,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.green.shade300),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.verified_rounded, size: 13, color: Colors.green.shade600),
-          const SizedBox(width: 4),
+          Icon(Icons.verified_rounded, size: 11, color: Colors.green.shade600),
+          const SizedBox(width: 3),
           Text(
             'Verified',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
               color: Colors.green.shade700,
             ),
@@ -194,17 +194,17 @@ class EventDetailScreen extends StatelessWidget {
     final end = DateFormat('h:mm a').format(event.endTime);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -225,21 +225,21 @@ class EventDetailScreen extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Icon(icon, size: 20, color: _typeColor),
-          const SizedBox(height: 5),
+          Icon(icon, size: 16, color: _typeColor),
+          const SizedBox(height: 3),
           Text(
             label,
             style: const TextStyle(
-                fontSize: 10,
+                fontSize: 9,
                 color: Colors.grey,
                 fontWeight: FontWeight.w600,
-                letterSpacing: 0.4),
+                letterSpacing: 0.3),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 2),
           Text(
             value,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1A0533),
             ),
@@ -251,28 +251,28 @@ class EventDetailScreen extends StatelessWidget {
   }
 
   Widget _divider() =>
-      Container(width: 1, height: 44, color: const Color(0xFFEEEEEE));
+      Container(width: 1, height: 34, color: const Color(0xFFEEEEEE));
 
   // ── Action buttons ─────────────────────────────────────────────────────────
 
   Widget _buildActionButtons(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
           Expanded(
             child: GestureDetector(
               onTap: () => _openDirections(),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 17),
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(colors: _typeGradient),
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: _typeColor.withValues(alpha: 0.38),
-                      blurRadius: 14,
-                      offset: const Offset(0, 5),
+                      color: _typeColor.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
@@ -280,14 +280,14 @@ class EventDetailScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(Icons.directions_rounded,
-                        color: Colors.white, size: 20),
-                    const SizedBox(width: 8),
+                        color: Colors.white, size: 17),
+                    const SizedBox(width: 6),
                     Text(
                       AppLocale.detailGetDirections.getString(context),
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 15,
+                        fontSize: 13,
                       ),
                     ),
                   ],
@@ -295,24 +295,24 @@ class EventDetailScreen extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           GestureDetector(
             onTap: () => _shareEvent(context),
             child: Container(
-              width: 56,
-              height: 56,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              child: Icon(Icons.share_rounded, color: _typeColor, size: 24),
+              child: Icon(Icons.share_rounded, color: _typeColor, size: 19),
             ),
           ),
         ],
@@ -330,18 +330,18 @@ class EventDetailScreen extends StatelessWidget {
         .toList();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -351,44 +351,44 @@ class EventDetailScreen extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: 26,
+                  height: 26,
                   decoration: BoxDecoration(
                     color: _typeColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(Icons.restaurant_rounded,
-                      size: 16, color: _typeColor),
+                      size: 13, color: _typeColor),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 const Text(
                   'Food Items',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1A0533),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 6,
+              runSpacing: 6,
               children: items
                   .map((item) => Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 7),
+                            horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
                           color: _typeColor.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                               color: _typeColor.withValues(alpha: 0.22)),
                         ),
                         child: Text(
                           item,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 11,
                             color: _typeColor,
                             fontWeight: FontWeight.w600,
                           ),
@@ -406,7 +406,7 @@ class EventDetailScreen extends StatelessWidget {
 
   Widget _buildPhotosSection(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -416,22 +416,22 @@ class EventDetailScreen extends StatelessWidget {
               Text(
                 AppLocale.detailPhotos.getString(context),
                 style: const TextStyle(
-                  fontSize: 17,
+                  fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1A0533),
                 ),
               ),
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: _typeColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   '${event.photos.length}',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                     color: _typeColor,
                   ),
@@ -439,7 +439,7 @@ class EventDetailScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -485,18 +485,18 @@ class EventDetailScreen extends StatelessWidget {
 
   Widget _buildDescriptionCard(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -506,33 +506,33 @@ class EventDetailScreen extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: 26,
+                  height: 26,
                   decoration: BoxDecoration(
                     color: _typeColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(Icons.info_outline_rounded,
-                      size: 16, color: _typeColor),
+                      size: 13, color: _typeColor),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Text(
                   AppLocale.detailAbout.getString(context),
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1A0533),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               event.description,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 color: Colors.grey[700],
-                height: 1.75,
+                height: 1.6,
               ),
             ),
           ],

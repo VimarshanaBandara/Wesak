@@ -441,15 +441,11 @@ class _EventListScreenState extends State<EventListScreen> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradients,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: const Color(0xFF211F3F),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: gradients.last.withValues(alpha: 0.4),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: 14,
             offset: const Offset(0, 5),
           ),
