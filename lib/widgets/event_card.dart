@@ -12,13 +12,6 @@ class EventCard extends StatelessWidget {
 
   const EventCard({super.key, required this.event, this.distanceKm});
 
-  static const _typeIcons = {
-    'dansal': Icons.restaurant,
-    'thorana': Icons.account_balance,
-    'kudu': Icons.light_mode,
-    'geetha': Icons.music_note,
-  };
-
   static const _typeGradients = {
     'dansal': [Color(0xFFBF360C), Color(0xFFFF6D00)],
     'thorana': [Color(0xFF4A148C), Color(0xFF7B1FA2)],
@@ -30,7 +23,6 @@ class EventCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final gradients =
         _typeGradients[event.type] ?? [Colors.grey, Colors.blueGrey];
-    final icon = _typeIcons[event.type] ?? Icons.event;
     final typeLabel = AppLocale.typeLabel(context, event.type);
     final hasPhoto = event.photos.isNotEmpty;
 
@@ -50,24 +42,6 @@ class EventCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Left gradient strip + icon
-            Container(
-              width: 64,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: gradients,
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  bottomLeft: Radius.circular(16),
-                ),
-              ),
-              constraints: const BoxConstraints(minHeight: 80),
-              child: Icon(icon, color: Colors.white, size: 26),
-            ),
-
             // Content
             Expanded(
               child: Padding(

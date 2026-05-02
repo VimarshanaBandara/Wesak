@@ -1,284 +1,113 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
+import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart' show Share;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/app_locale.dart';
 import '../models/event_model.dart';
+import '../widgets/wesak_app_bar.dart';
 
-/// Full-page Event Detail Screen
-class EventDetailScreen extends StatefulWidget {
+class EventDetailScreen extends StatelessWidget {
   final EventModel event;
 
   const EventDetailScreen({super.key, required this.event});
 
-  @override
-  State<EventDetailScreen> createState() => _EventDetailScreenState();
-}
-
-class _EventDetailScreenState extends State<EventDetailScreen> {
-  int _currentPhoto = 0;
-  final _pageController = PageController();
-
   static const _typeColors = {
     'dansal': Color(0xFFBF360C),
-    'thorana': Color(0xFF4A148C),
-    'kudu': Color(0xFFF57F17),
+    'thorana': Color(0xFF6A1B9A),
+    'kudu': Color(0xFFE65100),
     'geetha': Color(0xFF0D47A1),
   };
-  static const _typeIcons = {
-    'dansal': Icons.restaurant,
-    'thorana': Icons.account_balance,
-    'kudu': Icons.light_mode,
-    'geetha': Icons.music_note,
+
+  static const _typeGradients = {
+    'dansal': [Color(0xFFE64A19), Color(0xFF8D1900)],
+    'thorana': [Color(0xFF8E24AA), Color(0xFF1A0533)],
+    'kudu': [Color(0xFFFF7043), Color(0xFFBF360C)],
+    'geetha': [Color(0xFF1565C0), Color(0xFF002171)],
   };
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
+  static const _typeIcons = {
+    'dansal': Icons.restaurant_rounded,
+    'thorana': Icons.account_balance_rounded,
+    'kudu': Icons.light_mode_rounded,
+    'geetha': Icons.music_note_rounded,
+  };
 
   Color get _typeColor =>
-      _typeColors[widget.event.type] ?? const Color(0xFF1A0533);
+      _typeColors[event.type] ?? const Color(0xFF1A0533);
+
+  List<Color> get _typeGradient =>
+      _typeGradients[event.type] ??
+      [const Color(0xFF1A0533), const Color(0xFF4A148C)];
 
   @override
   Widget build(BuildContext context) {
-    final event = widget.event;
     final hasPhotos = event.photos.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: CustomScrollView(
-        slivers: [
-          // ── Header / Photo gallery ────────────────────────────────
-          SliverAppBar(
-            expandedHeight: hasPhotos ? 280 : 160,
-            pinned: true,
-            backgroundColor: _typeColor,
-            leading: GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                margin: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.black26,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.arrow_back, color: Colors.white),
-              ),
-            ),
-            actions: [
-              GestureDetector(
-                onTap: _shareEvent,
-                child: Container(
-                  margin: const EdgeInsets.all(8),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black26,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.share,
-                          color: Colors.white, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        AppLocale.detailShare.getString(context),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: hasPhotos
-                  ? _buildPhotoGallery(event)
-                  : _buildGradientHeader(event),
-            ),
-          ),
-
-          // ── Content ──────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildInfoCard(event),
-                const SizedBox(height: 12),
-                _buildActionButtons(event),
-                const SizedBox(height: 12),
-                if (hasPhotos) ...[
-                  _buildPhotosSection(event),
-                  const SizedBox(height: 12),
-                ],
-                if (event.description.isNotEmpty) ...[
-                  _buildDescriptionCard(event),
-                  const SizedBox(height: 12),
-                ],
-                const SizedBox(height: 32),
-              ],
-            ),
+      backgroundColor: const Color(0xFFF3EFF8),
+      appBar: WesakAppBar(
+        title: event.name,
+        showBackButton: true,
+        actions: [
+          IconButton(
+            onPressed: () => _shareEvent(context),
+            icon: const Icon(Icons.share_rounded, color: Colors.white),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildPhotoGallery(EventModel event) {
-    return Stack(
-      children: [
-        PageView.builder(
-          controller: _pageController,
-          itemCount: event.photos.length,
-          onPageChanged: (i) => setState(() => _currentPhoto = i),
-          itemBuilder: (_, i) => Image.network(
-            event.photos[i],
-            fit: BoxFit.cover,
-            loadingBuilder: (_, child, p) => p == null
-                ? child
-                : Container(
-                    color: _typeColor.withValues(alpha: 0.3),
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2),
-                    ),
-                  ),
-            errorBuilder: (_, _, _) => Container(
-              color: _typeColor,
-              child: const Icon(Icons.broken_image,
-                  color: Colors.white54, size: 48),
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Container(
-            height: 80,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [Colors.black54, Colors.transparent],
-              ),
-            ),
-          ),
-        ),
-        if (event.photos.length > 1)
-          Positioned(
-            bottom: 12,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                event.photos.length,
-                (i) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: i == _currentPhoto ? 20 : 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: i == _currentPhoto
-                        ? Colors.white
-                        : Colors.white54,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildGradientHeader(EventModel event) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [const Color(0xFF1A0533), _typeColor],
-        ),
-      ),
-      child: Center(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 48),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 40),
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                _typeIcons[event.type] ?? Icons.event,
-                color: Colors.white,
-                size: 36,
-              ),
-            ),
+            _buildMainInfo(context),
+            const SizedBox(height: 16),
+            _buildTimeCard(),
+            const SizedBox(height: 16),
+            _buildActionButtons(context),
+            if (event.foodItems.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _buildFoodItemsCard(),
+            ],
+            if (hasPhotos) ...[
+              const SizedBox(height: 24),
+              _buildPhotosSection(context),
+            ],
+            if (event.description.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              _buildDescriptionCard(context),
+            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildInfoCard(EventModel event) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+  // ── Main info ──────────────────────────────────────────────────────────────
+
+  Widget _buildMainInfo(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: _typeColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(_typeIcons[event.type] ?? Icons.event,
-                    size: 13, color: _typeColor),
-                const SizedBox(width: 5),
-                Text(
-                  AppLocale.typeLabel(context, event.type),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: _typeColor,
-                  ),
-                ),
+          Row(
+            children: [
+              _typeBadge(context),
+              if (event.verified) ...[
+                const SizedBox(width: 8),
+                _verifiedBadge(),
               ],
-            ),
+            ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           Text(
             event.name,
             style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
               color: Color(0xFF1A0533),
               height: 1.2,
             ),
@@ -287,22 +116,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             const SizedBox(height: 10),
             Row(
               children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.location_on,
-                      size: 16, color: Colors.grey),
-                ),
-                const SizedBox(width: 8),
+                Icon(Icons.location_on_rounded, size: 16, color: _typeColor),
+                const SizedBox(width: 4),
                 Text(
                   event.city,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey,
+                    color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -314,32 +134,152 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  Widget _buildActionButtons(EventModel event) {
+  Widget _typeBadge(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: _typeGradient),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(_typeIcons[event.type] ?? Icons.event,
+              size: 13, color: Colors.white),
+          const SizedBox(width: 5),
+          Text(
+            AppLocale.typeLabel(context, event.type),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _verifiedBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.green.shade50,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.green.shade300),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.verified_rounded, size: 13, color: Colors.green.shade600),
+          const SizedBox(width: 4),
+          Text(
+            'Verified',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Colors.green.shade700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Time card ──────────────────────────────────────────────────────────────
+
+  Widget _buildTimeCard() {
+    final date = DateFormat('MMM d, y').format(event.startTime);
+    final start = DateFormat('h:mm a').format(event.startTime);
+    final end = DateFormat('h:mm a').format(event.endTime);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            _timeCell(Icons.calendar_today_rounded, 'Date', date),
+            _divider(),
+            _timeCell(Icons.play_circle_rounded, 'Start', start),
+            _divider(),
+            _timeCell(Icons.stop_circle_rounded, 'End', end),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _timeCell(IconData icon, String label, String value) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, size: 20, color: _typeColor),
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: const TextStyle(
+                fontSize: 10,
+                color: Colors.grey,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.4),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1A0533),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _divider() =>
+      Container(width: 1, height: 44, color: const Color(0xFFEEEEEE));
+
+  // ── Action buttons ─────────────────────────────────────────────────────────
+
+  Widget _buildActionButtons(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
           Expanded(
-            flex: 2,
             child: GestureDetector(
-              onTap: () => _openDirections(event),
+              onTap: () => _openDirections(),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: const EdgeInsets.symmetric(vertical: 17),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1A0533),
-                  borderRadius: BorderRadius.circular(14),
+                  gradient: LinearGradient(colors: _typeGradient),
+                  borderRadius: BorderRadius.circular(18),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF1A0533).withValues(alpha: 0.35),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+                      color: _typeColor.withValues(alpha: 0.38),
+                      blurRadius: 14,
+                      offset: const Offset(0, 5),
                     ),
                   ],
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.directions,
+                    const Icon(Icons.directions_rounded,
                         color: Colors.white, size: 20),
                     const SizedBox(width: 8),
                     Text(
@@ -347,7 +287,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                        fontSize: 15,
                       ),
                     ),
                   ],
@@ -355,25 +295,24 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           GestureDetector(
-            onTap: _shareEvent,
+            onTap: () => _shareEvent(context),
             child: Container(
-              width: 52,
-              height: 52,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
-              child: const Icon(Icons.share,
-                  color: Color(0xFF1A0533), size: 22),
+              child: Icon(Icons.share_rounded, color: _typeColor, size: 24),
             ),
           ),
         ],
@@ -381,61 +320,156 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  Widget _buildPhotosSection(EventModel event) {
+  // ── Food items ─────────────────────────────────────────────────────────────
+
+  Widget _buildFoodItemsCard() {
+    final items = event.foodItems
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: _typeColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.restaurant_rounded,
+                      size: 16, color: _typeColor),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Food Items',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A0533),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: items
+                  .map((item) => Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: _typeColor.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                              color: _typeColor.withValues(alpha: 0.22)),
+                        ),
+                        child: Text(
+                          item,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: _typeColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ))
+                  .toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Photos section ─────────────────────────────────────────────────────────
+
+  Widget _buildPhotosSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 AppLocale.detailPhotos.getString(context),
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 17,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey,
-                  letterSpacing: 1.2,
+                  color: Color(0xFF1A0533),
                 ),
               ),
-              const SizedBox(width: 6),
-              Text(
-                '(${event.photos.length})',
-                style:
-                    const TextStyle(fontSize: 11, color: Colors.grey),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _typeColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${event.photos.length}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: _typeColor,
+                  ),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 120,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: event.photos.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (context, i) => GestureDetector(
-                onTap: () =>
-                    _openPhotoViewer(context, event.photos, i),
-                child: Hero(
-                  tag: 'photo_$i',
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      event.photos[i],
-                      width: 120,
-                      height: 120,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (_, child, p) => p == null
-                          ? child
-                          : Container(
-                              width: 120,
-                              height: 120,
-                              color: Colors.grey[200],
-                              child: const Center(
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2),
-                              ),
+          const SizedBox(height: 12),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+            ),
+            itemCount: event.photos.length,
+            itemBuilder: (ctx, i) => GestureDetector(
+              onTap: () => _openPhotoViewer(context, i),
+              child: Hero(
+                tag: 'photo_$i',
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    event.photos[i],
+                    fit: BoxFit.cover,
+                    loadingBuilder: (_, child, p) => p == null
+                        ? child
+                        : Container(
+                            color: Colors.grey[100],
+                            child: const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
+                          ),
+                    errorBuilder: (_, _, _) => Container(
+                      color: Colors.grey[200],
+                      child: const Icon(Icons.broken_image,
+                          color: Colors.grey, size: 28),
                     ),
                   ),
                 ),
@@ -447,48 +481,67 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  Widget _buildDescriptionCard(EventModel event) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            AppLocale.detailAbout.getString(context),
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-              letterSpacing: 1.2,
+  // ── Description card ───────────────────────────────────────────────────────
+
+  Widget _buildDescriptionCard(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            event.description,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF333333),
-              height: 1.6,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: _typeColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.info_outline_rounded,
+                      size: 16, color: _typeColor),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  AppLocale.detailAbout.getString(context),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A0533),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              event.description,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[700],
+                height: 1.75,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Future<void> _openDirections(EventModel event) async {
+  Future<void> _openDirections() async {
     final uri = Uri.parse(
       'geo:${event.lat},${event.lng}?q=${event.lat},${event.lng}(${Uri.encodeComponent(event.name)})',
     );
@@ -502,8 +555,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     }
   }
 
-  void _shareEvent() {
-    final event = widget.event;
+  void _shareEvent(BuildContext context) {
     final typeLabel = AppLocale.typeLabel(context, event.type);
     final text = '🪔 ${event.name}\n'
         '📍 ${event.city.isNotEmpty ? event.city : 'Sri Lanka'}\n'
@@ -512,25 +564,24 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     Share.share(text);
   }
 
-  void _openPhotoViewer(
-      BuildContext context, List<String> photos, int initialIndex) {
+  void _openPhotoViewer(BuildContext context, int initialIndex) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) =>
-            _PhotoViewer(photos: photos, initialIndex: initialIndex),
+            _PhotoViewer(photos: event.photos, initialIndex: initialIndex),
       ),
     );
   }
 }
 
-/// Full-screen photo viewer with swipe
+// ── Full-screen photo viewer ────────────────────────────────────────────────
+
 class _PhotoViewer extends StatefulWidget {
   final List<String> photos;
   final int initialIndex;
 
-  const _PhotoViewer(
-      {required this.photos, required this.initialIndex});
+  const _PhotoViewer({required this.photos, required this.initialIndex});
 
   @override
   State<_PhotoViewer> createState() => _PhotoViewerState();
