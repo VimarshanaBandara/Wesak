@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_localization/flutter_localization.dart';
+import 'package:google_maps_flutter_android/google_maps_flutter_android.dart';
+import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
 
 import 'firebase_options.dart';
 import 'l10n/app_locale.dart';
@@ -13,6 +15,12 @@ import 'screens/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Google Maps Android renderer — tile rendering fix
+  final mapsImpl = GoogleMapsFlutterPlatform.instance;
+  if (mapsImpl is GoogleMapsFlutterAndroid) {
+    mapsImpl.useAndroidViewSurface = false;
+  }
 
   // Localization initialize - Sinhala + English
   FlutterLocalization.instance.init(

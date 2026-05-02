@@ -74,6 +74,8 @@ dependencies:
 
   # Google Maps - active map provider
   google_maps_flutter: ^2.5.0
+  google_maps_flutter_android: ^2.14.0
+  google_maps_flutter_platform_interface: ^2.4.0
 
 dev_dependencies:
   flutter_test:
