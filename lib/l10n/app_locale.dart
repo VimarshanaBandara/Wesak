@@ -95,6 +95,7 @@ class AppLocale {
   static const String mapSearchFailed = 'map_search_failed';
   static const String mapNoEvents = 'map_no_events';
   static const String mapFilterAll = 'map_filter_all';
+  static const String mapViewDetails = 'map_view_details';
   static const String legendGeetha = 'legend_geetha';
 
   // ── Nearby ────────────────────────────────────────────────────────────────
@@ -203,6 +204,10 @@ class AppLocale {
   static const String detailShare = 'detail_share';
   static const String detailPhotos = 'detail_photos';
   static const String detailAbout = 'detail_about';
+  static const String detailOpenNow = 'detail_open_now';
+  static const String detailUpcoming = 'detail_upcoming';
+  static const String detailEnded = 'detail_ended';
+  static const String detailRating = 'detail_rating';
 
   // ── Common ────────────────────────────────────────────────────────────────
   static const String commonSignInFailed = 'common_sign_in_failed';
@@ -323,6 +328,7 @@ class AppLocale {
     mapSearchFailed: 'Search failed. Check connection.',
     mapNoEvents: 'No approved events yet',
     mapFilterAll: 'All',
+    mapViewDetails: 'View Details',
     legendGeetha: 'Geetha',
 
     nearbyTitle: 'Nearby Events',
@@ -424,6 +430,10 @@ class AppLocale {
     detailShare: 'Share',
     detailPhotos: 'PHOTOS',
     detailAbout: 'ABOUT',
+    detailOpenNow: 'Open Now',
+    detailUpcoming: 'Upcoming',
+    detailEnded: 'Ended',
+    detailRating: 'Rating',
 
     commonSignInFailed: 'Sign in failed: %a',
     commonMaway: '%a m away',
@@ -513,6 +523,7 @@ class AppLocale {
     mapSearchFailed: 'සෙවීම අසාර්ථකයි. සම්බන්ධතාවය පරීක්ෂා කරන්න.',
     mapNoEvents: 'තාමත් අනු​මත ඉසව් නෑ',
     mapFilterAll: 'සියල්ල',
+    mapViewDetails: 'සම්පූර්ණ විස්තරය',
     legendGeetha: 'ගීත',
 
     nearbyTitle: 'ළඟා ඉසව්',
@@ -614,6 +625,10 @@ class AppLocale {
     detailShare: 'බෙදාගන්න',
     detailPhotos: 'ඡායාරූප',
     detailAbout: 'ගැන',
+    detailOpenNow: 'දැන් විවෘතයි',
+    detailUpcoming: 'ඉදිරියේදී',
+    detailEnded: 'අවසන් වුණා',
+    detailRating: 'ශ්‍රේණිය',
 
     commonSignInFailed: 'ඇතුළු වීමේ දෝෂය: %a',
     commonMaway: '%a m ළඟ',

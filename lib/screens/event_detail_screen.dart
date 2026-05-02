@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart' show Share;
@@ -6,7 +7,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/app_locale.dart';
 import '../models/event_model.dart';
-import '../widgets/wesak_app_bar.dart';
+
+enum _EventStatus { open, upcoming, ended }
 
 class EventDetailScreen extends StatelessWidget {
   final EventModel event;
@@ -34,152 +36,260 @@ class EventDetailScreen extends StatelessWidget {
     'geetha': Icons.music_note_rounded,
   };
 
-  Color get _typeColor =>
-      _typeColors[event.type] ?? const Color(0xFF1A0533);
+  Color get _typeColor => _typeColors[event.type] ?? const Color(0xFF1A0533);
 
   List<Color> get _typeGradient =>
       _typeGradients[event.type] ??
       [const Color(0xFF1A0533), const Color(0xFF4A148C)];
 
+  _EventStatus get _status {
+    final now = DateTime.now();
+    if (now.isBefore(event.startTime)) return _EventStatus.upcoming;
+    if (now.isAfter(event.endTime)) return _EventStatus.ended;
+    return _EventStatus.open;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final hasPhotos = event.photos.isNotEmpty;
-
     return Scaffold(
       backgroundColor: const Color(0xFFF3EFF8),
-      appBar: WesakAppBar(
-        title: event.name,
-        showBackButton: true,
-        actions: [
-          IconButton(
-            onPressed: () => _shareEvent(context),
-            icon: const Icon(Icons.share_rounded, color: Colors.white),
+      body: CustomScrollView(
+        slivers: [
+          _buildSliverAppBar(context),
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+                _buildTimeCard(),
+                if (event.rating > 0) ...[
+                  const SizedBox(height: 12),
+                  _buildRatingCard(context),
+                ],
+                if (event.foodItems.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _buildFoodItemsCard(),
+                ],
+                if (event.photos.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  _buildPhotosSection(context),
+                ],
+                if (event.description.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  _buildDescriptionCard(context),
+                ],
+                const SizedBox(height: 100),
+              ],
+            ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      bottomNavigationBar: _buildBottomBar(context),
+    );
+  }
+
+  // ── Sliver hero app bar ────────────────────────────────────────────────────
+
+  Widget _buildSliverAppBar(BuildContext context) {
+    final hasPhoto = event.photos.isNotEmpty;
+
+    return SliverAppBar(
+      expandedHeight: 260,
+      pinned: true,
+      backgroundColor: _typeGradient.first,
+      systemOverlayStyle: SystemUiOverlayStyle.light,
+      automaticallyImplyLeading: false,
+      leading: Padding(
+        padding: const EdgeInsets.all(8),
+        child: _CircleButton(
+          icon: Icons.arrow_back_rounded,
+          onTap: () => Navigator.pop(context),
+        ),
+      ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: _CircleButton(
+            icon: Icons.share_rounded,
+            onTap: () => _shareEvent(context),
+          ),
+        ),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        background: Stack(
+          fit: StackFit.expand,
           children: [
-            _buildMainInfo(context),
-            const SizedBox(height: 12),
-            _buildTimeCard(),
-            const SizedBox(height: 12),
-            _buildActionButtons(context),
-            if (event.foodItems.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              _buildFoodItemsCard(),
-            ],
-            if (hasPhotos) ...[
-              const SizedBox(height: 16),
-              _buildPhotosSection(context),
-            ],
-            if (event.description.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              _buildDescriptionCard(context),
-            ],
+            // Background: first photo or gradient
+            if (hasPhoto)
+              Image.network(
+                event.photos.first,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => _gradientBox(),
+              )
+            else
+              _gradientBox(),
+            // Bottom gradient overlay for text readability
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.65),
+                    ],
+                    stops: const [0.35, 1.0],
+                  ),
+                ),
+              ),
+            ),
+            // Event info overlay at bottom of hero
+            Positioned(
+              bottom: 16,
+              left: 16,
+              right: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      _typeBadge(context),
+                      if (event.verified) _verifiedBadge(),
+                      _statusBadge(context),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    event.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      height: 1.2,
+                      shadows: [Shadow(blurRadius: 6, color: Colors.black45)],
+                    ),
+                  ),
+                  if (event.city.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_rounded,
+                            size: 13, color: Colors.white70),
+                        const SizedBox(width: 3),
+                        Text(
+                          event.city,
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  // ── Main info ──────────────────────────────────────────────────────────────
+  Widget _gradientBox() => Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: _typeGradient,
+          ),
+        ),
+      );
 
-  Widget _buildMainInfo(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _typeBadge(context),
-              if (event.verified) ...[
-                const SizedBox(width: 6),
-                _verifiedBadge(),
-              ],
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            event.name,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1A0533),
-              height: 1.2,
-            ),
-          ),
-          if (event.city.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Icon(Icons.location_on_rounded, size: 13, color: _typeColor),
-                const SizedBox(width: 3),
-                Text(
-                  event.city,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+  Widget _typeBadge(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(_typeIcons[event.type] ?? Icons.event,
+                size: 11, color: Colors.white),
+            const SizedBox(width: 4),
+            Text(
+              AppLocale.typeLabel(context, event.type),
+              style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white),
             ),
           ],
-        ],
-      ),
-    );
-  }
+        ),
+      );
 
-  Widget _typeBadge(BuildContext context) {
+  Widget _verifiedBadge() => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.green.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.green.withValues(alpha: 0.5)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.verified_rounded,
+                size: 11, color: Colors.greenAccent.shade100),
+            const SizedBox(width: 3),
+            Text(
+              'Verified',
+              style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.greenAccent.shade100),
+            ),
+          ],
+        ),
+      );
+
+  Widget _statusBadge(BuildContext context) {
+    late final Color color;
+    late final String label;
+    late final IconData icon;
+
+    if (_status == _EventStatus.open) {
+      color = Colors.greenAccent;
+      label = AppLocale.detailOpenNow.getString(context);
+      icon = Icons.radio_button_checked_rounded;
+    } else if (_status == _EventStatus.upcoming) {
+      color = Colors.orangeAccent;
+      label = AppLocale.detailUpcoming.getString(context);
+      icon = Icons.schedule_rounded;
+    } else {
+      color = Colors.white54;
+      label = AppLocale.detailEnded.getString(context);
+      icon = Icons.check_circle_outline_rounded;
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: _typeGradient),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(_typeIcons[event.type] ?? Icons.event,
-              size: 11, color: Colors.white),
+          Icon(icon, size: 10, color: color),
           const SizedBox(width: 4),
           Text(
-            AppLocale.typeLabel(context, event.type),
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _verifiedBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.green.shade50,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.green.shade300),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.verified_rounded, size: 11, color: Colors.green.shade600),
-          const SizedBox(width: 3),
-          Text(
-            'Verified',
+            label,
             style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: Colors.green.shade700,
-            ),
+                fontSize: 10, fontWeight: FontWeight.bold, color: color),
           ),
         ],
       ),
@@ -221,106 +331,101 @@ class EventDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _timeCell(IconData icon, String label, String value) {
-    return Expanded(
-      child: Column(
-        children: [
-          Icon(icon, size: 16, color: _typeColor),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: const TextStyle(
-                fontSize: 9,
-                color: Colors.grey,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.3),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1A0533),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _timeCell(IconData icon, String label, String value) => Expanded(
+        child: Column(
+          children: [
+            Icon(icon, size: 16, color: _typeColor),
+            const SizedBox(height: 3),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 9,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3)),
+            const SizedBox(height: 2),
+            Text(value,
+                style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A0533)),
+                textAlign: TextAlign.center),
+          ],
+        ),
+      );
 
   Widget _divider() =>
       Container(width: 1, height: 34, color: const Color(0xFFEEEEEE));
 
-  // ── Action buttons ─────────────────────────────────────────────────────────
+  // ── Rating card ────────────────────────────────────────────────────────────
 
-  Widget _buildActionButtons(BuildContext context) {
+  Widget _buildRatingCard(BuildContext context) {
+    final stars = event.rating.clamp(0.0, 5.0);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => _openDirections(),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: _typeGradient),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _typeColor.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.directions_rounded,
-                        color: Colors.white, size: 17),
-                    const SizedBox(width: 6),
-                    Text(
-                      AppLocale.detailGetDirections.getString(context),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-          ),
-          const SizedBox(width: 10),
-          GestureDetector(
-            onTap: () => _shareEvent(context),
-            child: Container(
-              width: 44,
-              height: 44,
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 26,
+              height: 26,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: Colors.amber.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(Icons.share_rounded, color: _typeColor, size: 19),
+              child: const Icon(Icons.star_rounded,
+                  size: 14, color: Colors.amber),
             ),
-          ),
-        ],
+            const SizedBox(width: 10),
+            Text(
+              AppLocale.detailRating.getString(context),
+              style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A0533)),
+            ),
+            const Spacer(),
+            Row(
+              children: List.generate(5, (i) {
+                if (i < stars.floor()) {
+                  return const Icon(Icons.star_rounded,
+                      size: 16, color: Colors.amber);
+                } else if (i < stars) {
+                  return const Icon(Icons.star_half_rounded,
+                      size: 16, color: Colors.amber);
+                } else {
+                  return const Icon(Icons.star_outline_rounded,
+                      size: 16, color: Colors.amber);
+                }
+              }),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              stars.toStringAsFixed(1),
+              style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.amber),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // ── Food items ─────────────────────────────────────────────────────────────
+  // ── Food items card ────────────────────────────────────────────────────────
 
   Widget _buildFoodItemsCard() {
     final items = event.foodItems
@@ -364,10 +469,9 @@ class EventDetailScreen extends StatelessWidget {
                 const Text(
                   'Food Items',
                   style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A0533),
-                  ),
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A0533)),
                 ),
               ],
             ),
@@ -388,10 +492,9 @@ class EventDetailScreen extends StatelessWidget {
                         child: Text(
                           item,
                           style: TextStyle(
-                            fontSize: 11,
-                            color: _typeColor,
-                            fontWeight: FontWeight.w600,
-                          ),
+                              fontSize: 11,
+                              color: _typeColor,
+                              fontWeight: FontWeight.w600),
                         ),
                       ))
                   .toList(),
@@ -402,24 +505,23 @@ class EventDetailScreen extends StatelessWidget {
     );
   }
 
-  // ── Photos section ─────────────────────────────────────────────────────────
+  // ── Photos section (horizontal scroll) ────────────────────────────────────
 
   Widget _buildPhotosSection(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 AppLocale.detailPhotos.getString(context),
                 style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A0533),
-                ),
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A0533)),
               ),
               Container(
                 padding:
@@ -431,115 +533,191 @@ class EventDetailScreen extends StatelessWidget {
                 child: Text(
                   '${event.photos.length}',
                   style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: _typeColor,
-                  ),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: _typeColor),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 140,
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            scrollDirection: Axis.horizontal,
             itemCount: event.photos.length,
             itemBuilder: (ctx, i) => GestureDetector(
               onTap: () => _openPhotoViewer(context, i),
-              child: Hero(
-                tag: 'photo_$i',
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    event.photos[i],
-                    fit: BoxFit.cover,
-                    loadingBuilder: (_, child, p) => p == null
-                        ? child
-                        : Container(
-                            color: Colors.grey[100],
-                            child: const Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
+              child: Padding(
+                padding: EdgeInsets.only(
+                    right: i < event.photos.length - 1 ? 10 : 0),
+                child: Hero(
+                  tag: 'photo_$i',
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Image.network(
+                      event.photos[i],
+                      width: 130,
+                      height: 140,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (_, child, p) => p == null
+                          ? child
+                          : Container(
+                              width: 130,
+                              height: 140,
+                              color: Colors.grey[100],
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2),
+                              ),
                             ),
-                          ),
-                    errorBuilder: (_, _, _) => Container(
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.broken_image,
-                          color: Colors.grey, size: 28),
+                      errorBuilder: (_, _, _) => Container(
+                        width: 130,
+                        height: 140,
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.broken_image,
+                            color: Colors.grey, size: 28),
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   // ── Description card ───────────────────────────────────────────────────────
 
-  Widget _buildDescriptionCard(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    color: _typeColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.info_outline_rounded,
-                      size: 13, color: _typeColor),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  AppLocale.detailAbout.getString(context),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A0533),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              event.description,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey[700],
-                height: 1.6,
+  Widget _buildDescriptionCard(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
-            ),
-          ],
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 26,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      color: _typeColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.info_outline_rounded,
+                        size: 13, color: _typeColor),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    AppLocale.detailAbout.getString(context),
+                    style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1A0533)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                event.description,
+                style:
+                    TextStyle(fontSize: 13, color: Colors.grey[700], height: 1.6),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
+
+  // ── Sticky bottom bar ──────────────────────────────────────────────────────
+
+  Widget _buildBottomBar(BuildContext context) => SafeArea(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, -3),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: _openDirections,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: _typeGradient),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _typeColor.withValues(alpha: 0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.directions_rounded,
+                            color: Colors.white, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          AppLocale.detailGetDirections.getString(context),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              GestureDetector(
+                onTap: () => _shareEvent(context),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: _typeColor.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                    border:
+                        Border.all(color: _typeColor.withValues(alpha: 0.2)),
+                  ),
+                  child:
+                      Icon(Icons.share_rounded, color: _typeColor, size: 20),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+  // ── Actions ────────────────────────────────────────────────────────────────
 
   Future<void> _openDirections() async {
     final uri = Uri.parse(
@@ -570,6 +748,31 @@ class EventDetailScreen extends StatelessWidget {
       MaterialPageRoute(
         builder: (_) =>
             _PhotoViewer(photos: event.photos, initialIndex: initialIndex),
+      ),
+    );
+  }
+}
+
+// ── Circle button for hero overlay ────────────────────────────────────────────
+
+class _CircleButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _CircleButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.35),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: Colors.white, size: 18),
       ),
     );
   }
