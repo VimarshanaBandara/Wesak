@@ -43,6 +43,9 @@ class OSMMapProvider implements MapProvider {
       options: MapOptions(
         initialCenter: initialCenter,
         initialZoom: initialZoom,
+        interactionOptions: const InteractionOptions(
+          flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+        ),
       ),
       children: [
         TileLayer(
@@ -74,6 +77,9 @@ class OSMMapProvider implements MapProvider {
       options: MapOptions(
         initialCenter: initialCenter,
         initialZoom: initialZoom,
+        interactionOptions: const InteractionOptions(
+          flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+        ),
         onTap: (_, latLng) => onLocationSelected(latLng),
       ),
       children: [

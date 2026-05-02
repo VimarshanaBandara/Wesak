@@ -54,6 +54,7 @@ class GoogleMapProvider implements MapProvider {
       markers: gmMarkers,
       myLocationButtonEnabled: false,
       zoomControlsEnabled: false,
+      rotateGesturesEnabled: false,
       onMapCreated: (controller) {
         _mapController = controller;
         onMapReady?.call(_GoogleCameraController(controller));
@@ -97,6 +98,7 @@ class GoogleMapProvider implements MapProvider {
       markers: markers,
       myLocationButtonEnabled: false,
       zoomControlsEnabled: false,
+      rotateGesturesEnabled: false,
       onTap: (gm.LatLng latLng) {
         onLocationSelected(LatLng(latLng.latitude, latLng.longitude));
       },
