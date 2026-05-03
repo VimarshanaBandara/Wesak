@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "154039038567-qvrdahhb1rspe10uik01ch3ph7fr067p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vmmobile.wesak",
+            "certificate_hash": "fb2e017d2693dbcc5aff0b9995d23f7ba013401f"
+          }
+        },
+        {
           "client_id": "154039038567-mi6hofulvp85u8fpfjuhagdklkhrsovc.apps.googleusercontent.com",
           "client_type": 3
         }
