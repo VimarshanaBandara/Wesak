@@ -555,7 +555,9 @@ class _MapScreenState extends State<MapScreen> {
     EventMarker marker,
     List<EventModel> events,
   ) {
-    final event = events.firstWhere((e) => e.id == marker.id);
+    final matches = events.where((e) => e.id == marker.id);
+    if (matches.isEmpty) return;
+    final event = matches.first;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,

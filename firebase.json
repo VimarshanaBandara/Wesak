@@ -1,1 +1,24 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"wesak-app","appId":"1:154039038567:android:9d8be2aadc1af12778dac2","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"wesak-app","configurations":{"android":"1:154039038567:android:9d8be2aadc1af12778dac2"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "wesak-app",
+          "appId": "1:154039038567:android:9d8be2aadc1af12778dac2",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "wesak-app",
+          "configurations": {
+            "android": "1:154039038567:android:9d8be2aadc1af12778dac2"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}

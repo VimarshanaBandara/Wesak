@@ -1,0 +1,62 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: check if user is authenticated
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Helper: check if user has admin role
+    function isAdmin() {
+      return isAuth() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // ── Events ──────────────────────────────────────────────────────────────
+    match /events/{eventId} {
+      // Anyone can read approved/verified events
+      allow read: if resource.data.verified == true || resource.data.status == 'approved';
+
+      // Authenticated user can read their own events (any status)
+      allow read: if isAuth() && resource.data.addedBy == request.auth.uid;
+
+      // Admin can read all events
+      allow read: if isAdmin();
+
+      // Authenticated user can create events (status must be 'pending', verified false)
+      allow create: if isAuth()
+        && request.resource.data.status == 'pending'
+        && request.resource.data.verified == false
+        && request.resource.data.addedBy == request.auth.uid;
+
+      // Owner can update their own event only if it's still pending (edit before approval)
+      allow update: if isAuth()
+        && resource.data.addedBy == request.auth.uid
+        && resource.data.status == 'pending'
+        // Owner cannot change status or verified fields
+        && request.resource.data.status == 'pending'
+        && request.resource.data.verified == false;
+
+      // Admin can update any event (approve/reject/edit)
+      allow update: if isAdmin();
+
+      // Admin can delete any event; owner can delete their own pending event
+      allow delete: if isAdmin()
+        || (isAuth() && resource.data.addedBy == request.auth.uid && resource.data.status == 'pending');
+    }
+
+    // ── Users ────────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      // User can read and write only their own document
+      allow read, write: if isAuth() && request.auth.uid == userId
+        // But cannot promote themselves to admin
+        && (!request.resource.data.keys().hasAny(['role']) ||
+            request.resource.data.role == resource.data.role);
+
+      // Admin can read all user documents
+      allow read: if isAdmin();
+    }
+  }
+}

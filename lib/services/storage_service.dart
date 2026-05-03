@@ -29,7 +29,8 @@ class StorageService {
   /// Single photo Firebase Storage ට upload කරලා download URL return කරනවා
   /// Path: events/{uid}/{timestamp}_{filename}
   Future<String> uploadEventPhoto(XFile photo) async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) throw Exception('User not authenticated');
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final filename = photo.name;
 

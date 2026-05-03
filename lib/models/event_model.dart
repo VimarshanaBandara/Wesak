@@ -18,6 +18,7 @@ class EventModel {
   final String status; // pending | approved | rejected
   final String addedBy; // Firebase Auth user UID
   final String foodItems; // Dansal ෙකදී දෙන ආහාර list (dansal only)
+  final String contact;   // Contact phone number (optional)
 
   const EventModel({
     required this.id,
@@ -35,6 +36,7 @@ class EventModel {
     this.status = 'pending',
     required this.addedBy,
     this.foodItems = '',
+    this.contact = '',
   });
 
   /// Firestore document snapshot -> EventModel
@@ -57,6 +59,7 @@ class EventModel {
       status: data['status'] as String? ?? 'pending',
       addedBy: data['addedBy'] as String? ?? '',
       foodItems: data['foodItems'] as String? ?? '',
+      contact: data['contact'] as String? ?? '',
     );
   }
 
@@ -76,6 +79,7 @@ class EventModel {
       'status': status,
       'addedBy': addedBy,
       'foodItems': foodItems,
+      'contact': contact,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }
