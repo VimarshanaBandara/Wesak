@@ -49,14 +49,19 @@ service cloud.firestore {
 
     // ── Users ────────────────────────────────────────────────────────────────
     match /users/{userId} {
-      // User can read and write only their own document
-      allow read, write: if isAuth() && request.auth.uid == userId
-        // But cannot promote themselves to admin
-        && (!request.resource.data.keys().hasAny(['role']) ||
-            request.resource.data.role == resource.data.role);
-
-      // Admin can read all user documents
+      // User can read their own document; admin can read all
+      allow read: if isAuth() && request.auth.uid == userId;
       allow read: if isAdmin();
+
+      // First login: create own document, role must be 'user'
+      allow create: if isAuth()
+        && request.auth.uid == userId
+        && request.resource.data.role == 'user';
+
+      // Update own document: cannot change role
+      allow update: if isAuth()
+        && request.auth.uid == userId
+        && request.resource.data.role == resource.data.role;
     }
   }
 }
