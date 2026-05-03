@@ -36,6 +36,7 @@ class _MapScreenState extends State<MapScreen> {
   bool _searching = false;
   String? _searchError;
   bool _locating = false;
+  bool _findingDansal = false;
   Position? _lastPosition;
 
   static const _typeColors = {
@@ -338,14 +339,21 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ),
 
-              // Legend - bottom left
-              Positioned(bottom: 16, left: 16, child: _MapLegend()),
-
-              // My Location button - bottom right
+              // Bottom row: legend + nearest dansal + my location
               Positioned(
                 bottom: 16,
+                left: 16,
                 right: 16,
-                child: _buildMyLocationButton(),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _MapLegend(),
+                    const Spacer(),
+                    _buildNearestDansalButton(context, events),
+                    const SizedBox(width: 10),
+                    _buildMyLocationButton(),
+                  ],
+                ),
               ),
             ],
           );
@@ -429,6 +437,117 @@ class _MapScreenState extends State<MapScreen> {
               ),
       ),
     );
+  }
+
+  Widget _buildNearestDansalButton(
+      BuildContext context, List<EventModel> events) {
+    return GestureDetector(
+      onTap: () => _findNearestDansal(events),
+      child: Container(
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFE64A19), Color(0xFF8D1900)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE65100).withValues(alpha: 0.45),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_findingDansal)
+              const SizedBox(
+                width: 15,
+                height: 15,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Colors.white),
+              )
+            else
+              const Icon(Icons.soup_kitchen_rounded,
+                  color: Colors.white, size: 16),
+            const SizedBox(width: 7),
+            Text(
+              AppLocale.mapNearestDansal.getString(context),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _findNearestDansal(List<EventModel> events) async {
+    if (_findingDansal) return;
+    setState(() => _findingDansal = true);
+
+    try {
+      LocationPermission perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.deniedForever ||
+          perm == LocationPermission.denied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(AppLocale.listGpsDenied.getString(context)),
+            behavior: SnackBarBehavior.floating,
+          ));
+        }
+        return;
+      }
+
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      _lastPosition = pos;
+
+      final sorted = events
+          .where((e) => e.type == 'dansal')
+          .map((e) => (
+                event: e,
+                distMeters: Geolocator.distanceBetween(
+                    pos.latitude, pos.longitude, e.lat, e.lng),
+              ))
+          .toList()
+        ..sort((a, b) => a.distMeters.compareTo(b.distMeters));
+
+      if (mounted) {
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.transparent,
+          isScrollControlled: true,
+          builder: (_) => _NearestDansalSheet(
+            dansals: sorted,
+            onShowOnMap: (event) {
+              _cameraController?.move(LatLng(event.lat, event.lng), 16.0);
+            },
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocale.listGpsError.getString(context)),
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _findingDansal = false);
+    }
   }
 
   void _showEventPreview(
@@ -984,6 +1103,221 @@ class _FullScreenPhotoViewer extends StatelessWidget {
                 const Icon(Icons.broken_image, color: Colors.white, size: 48),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Nearest Dansal bottom sheet ─────────────────────────────────────────────
+
+class _NearestDansalSheet extends StatelessWidget {
+  final List<({EventModel event, double distMeters})> dansals;
+  final void Function(EventModel) onShowOnMap;
+
+  const _NearestDansalSheet({
+    required this.dansals,
+    required this.onShowOnMap,
+  });
+
+  String _formatDistance(double meters) {
+    if (meters < 1000) return '${meters.round()} m';
+    return '${(meters / 1000).toStringAsFixed(1)} km';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      constraints:
+          BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 10),
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFE64A19), Color(0xFF8D1900)],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.soup_kitchen_rounded,
+                      color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  AppLocale.mapNearestDansalTitle.getString(context),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A0533),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          if (dansals.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                children: [
+                  Icon(Icons.soup_kitchen_outlined,
+                      size: 48, color: Colors.grey[300]),
+                  const SizedBox(height: 12),
+                  Text(
+                    AppLocale.mapNoDansals.getString(context),
+                    style:
+                        TextStyle(color: Colors.grey[500], fontSize: 14),
+                  ),
+                ],
+              ),
+            )
+          else
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: dansals.length,
+                separatorBuilder: (_, _) => const Divider(
+                    height: 1, indent: 16, endIndent: 16),
+                itemBuilder: (ctx, i) {
+                  final item = dansals[i];
+                  return _DansalNearbyRow(
+                    event: item.event,
+                    distance: _formatDistance(item.distMeters),
+                    rank: i + 1,
+                    onShowOnMap: () {
+                      Navigator.pop(ctx);
+                      onShowOnMap(item.event);
+                    },
+                  );
+                },
+              ),
+            ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+        ],
+      ),
+    );
+  }
+}
+
+class _DansalNearbyRow extends StatelessWidget {
+  final EventModel event;
+  final String distance;
+  final int rank;
+  final VoidCallback onShowOnMap;
+
+  const _DansalNearbyRow({
+    required this.event,
+    required this.distance,
+    required this.rank,
+    required this.onShowOnMap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: rank == 1
+                  ? const Color(0xFFE64A19)
+                  : const Color(0xFF1A0533).withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                '$rank',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: rank == 1 ? Colors.white : const Color(0xFF1A0533),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  event.name,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1A0533),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (event.city.isNotEmpty)
+                  Text(
+                    event.city,
+                    style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE64A19).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  distance,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFE64A19),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              GestureDetector(
+                onTap: onShowOnMap,
+                child: Text(
+                  AppLocale.mapShowOnMap.getString(context),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1565C0),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

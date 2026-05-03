@@ -53,6 +53,10 @@ class AppLocale {
   static const String profileAdminPanel = 'profile_admin_panel';
   static const String profileAdminSubtitle = 'profile_admin_subtitle';
   static const String profileSignOut = 'profile_sign_out';
+  static const String profileDeleteAccount = 'profile_delete_account';
+  static const String profileDeleteConfirmTitle = 'profile_delete_confirm_title';
+  static const String profileDeleteConfirmMsg = 'profile_delete_confirm_msg';
+  static const String profileDeleteConfirmBtn = 'profile_delete_confirm_btn';
   static const String profileSettings = 'profile_settings';
   static const String profileAccount = 'profile_account';
   static const String profileAdmin = 'profile_admin';
@@ -97,6 +101,10 @@ class AppLocale {
   static const String mapFilterAll = 'map_filter_all';
   static const String mapViewDetails = 'map_view_details';
   static const String legendGeetha = 'legend_geetha';
+  static const String mapNearestDansal = 'map_nearest_dansal';
+  static const String mapNearestDansalTitle = 'map_nearest_dansal_title';
+  static const String mapNoDansals = 'map_no_dansals';
+  static const String mapShowOnMap = 'map_show_on_map';
 
   // ── Nearby ────────────────────────────────────────────────────────────────
   static const String nearbyTitle = 'nearby_title';
@@ -289,6 +297,10 @@ class AppLocale {
     profileAdminPanel: 'Admin Panel',
     profileAdminSubtitle: 'Review pending submissions',
     profileSignOut: 'Sign Out',
+    profileDeleteAccount: 'Delete Account',
+    profileDeleteConfirmTitle: 'Delete Account?',
+    profileDeleteConfirmMsg: 'This will permanently delete your account and all your data. This action cannot be undone.',
+    profileDeleteConfirmBtn: 'Delete',
     profileSettings: 'Settings',
     profileAccount: 'Account',
     profileAdmin: 'Admin',
@@ -330,6 +342,10 @@ class AppLocale {
     mapFilterAll: 'All',
     mapViewDetails: 'View Details',
     legendGeetha: 'Geetha',
+    mapNearestDansal: 'Nearest Dansal',
+    mapNearestDansalTitle: 'Nearest Dansals',
+    mapNoDansals: 'No dansals found near you',
+    mapShowOnMap: 'Show on map',
 
     nearbyTitle: 'Nearby Events',
     nearbyGettingLocation: 'Getting your location...',
@@ -484,6 +500,10 @@ class AppLocale {
     profileAdminPanel: 'පරිපාලන කොටස',
     profileAdminSubtitle: 'ලැබෙන ඉදිරිපත් කිරීම් සමාලෝචනය',
     profileSignOut: 'ඉවත් වන්න',
+    profileDeleteAccount: 'ගිණුම මකන්න',
+    profileDeleteConfirmTitle: 'ගිණුම මකන්නද?',
+    profileDeleteConfirmMsg: 'ඔබේ ගිණුම සහ සියලු දත්ත සදහටම මකා දමනු ලැබේ. මෙය undo කළ නොහැක.',
+    profileDeleteConfirmBtn: 'මකන්න',
     profileSettings: 'සැකසීම්',
     profileAccount: 'ගිණුම',
     profileAdmin: 'පරිපාලක',
@@ -525,6 +545,10 @@ class AppLocale {
     mapFilterAll: 'සියල්ල',
     mapViewDetails: 'සම්පූර්ණ විස්තරය',
     legendGeetha: 'ගීත',
+    mapNearestDansal: 'ළඟම දන්සල',
+    mapNearestDansalTitle: 'ළඟම දන්සල්',
+    mapNoDansals: 'ළඟ දන්සල් හමු නොවීය',
+    mapShowOnMap: 'සිතියමේ',
 
     nearbyTitle: 'ළඟා ඉසව්',
     nearbyGettingLocation: 'ස්ථානය ලබාගනිමින්...',

@@ -47,4 +47,24 @@ class AuthService {
     await _googleSignIn.signOut();
     await _auth.signOut();
   }
+
+  /// Delete account - re-authenticate with Google then delete Firebase user
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    // Firebase requires recent auth before deleting — re-authenticate first
+    final googleUser = await _googleSignIn.signIn();
+    if (googleUser == null) throw Exception('cancelled');
+
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    await user.reauthenticateWithCredential(credential);
+    await user.delete();
+    await _googleSignIn.signOut();
+  }
 }

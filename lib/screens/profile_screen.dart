@@ -213,7 +213,8 @@ class ProfileScreen extends StatelessWidget {
               ],
 
               _sectionLabel(AppLocale.profileSettings.getString(context)),
-              _buildSettingsCard(context),
+              _buildSettingsCard(context,
+                  onDeleteAccount: () => _confirmDeleteAccount(context)),
               const SizedBox(height: 20),
 
               _sectionLabel(AppLocale.profileAccount.getString(context)),
@@ -241,8 +242,8 @@ class ProfileScreen extends StatelessWidget {
   }
 
   // ── Settings card ────────────────────────────────────────────────────────
-  Widget _buildSettingsCard(BuildContext context) {
-    // Current language code ෙකන් subtitle compute කරනවා
+  Widget _buildSettingsCard(BuildContext context,
+      {VoidCallback? onDeleteAccount}) {
     final langCode = Localizations.localeOf(context).languageCode;
     final langSubtitle = langCode == 'si'
         ? AppLocale.profileLangSi.getString(context)
@@ -265,6 +266,15 @@ class ProfileScreen extends StatelessWidget {
           subtitle: AppLocale.profileManageAlerts.getString(context),
           onTap: () {},
         ),
+        if (onDeleteAccount != null) ...[
+          const SizedBox(height: 8),
+          _tile(
+            icon: Icons.delete_forever_outlined,
+            iconBg: Colors.red,
+            title: AppLocale.profileDeleteAccount.getString(context),
+            onTap: onDeleteAccount,
+          ),
+        ],
         const SizedBox(height: 8),
         _tile(
           icon: Icons.info_outline,
@@ -462,6 +472,48 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(AppLocale.profileDeleteConfirmTitle.getString(context),
+            style: const TextStyle(
+                color: Color(0xFF1A0533), fontWeight: FontWeight.bold)),
+        content: Text(AppLocale.profileDeleteConfirmMsg.getString(context),
+            style: const TextStyle(color: Colors.grey, fontSize: 13)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(AppLocale.adminCancel.getString(context)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              AppLocale.profileDeleteConfirmBtn.getString(context),
+              style: const TextStyle(
+                  color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await _auth.deleteAccount();
+    } catch (e) {
+      if (context.mounted && '$e' != 'Exception: cancelled') {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+              context.formatString(AppLocale.commonSignInFailed, ['$e'])),
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    }
   }
 
   Future<void> _signIn(BuildContext context) async {
