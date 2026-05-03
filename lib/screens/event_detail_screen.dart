@@ -659,7 +659,7 @@ class EventDetailScreen extends StatelessWidget {
     final text = '🪔 ${event.name}\n'
         '📍 ${event.city.isNotEmpty ? event.city : 'Sri Lanka'}\n'
         '🎉 $typeLabel\n\n'
-        'Shared via Wesak 2026 App';
+        'Shared via Dansal Go';
     Share.share(text);
   }
 

@@ -54,7 +54,8 @@ class AppLocale {
   static const String profileAdminSubtitle = 'profile_admin_subtitle';
   static const String profileSignOut = 'profile_sign_out';
   static const String profileDeleteAccount = 'profile_delete_account';
-  static const String profileDeleteConfirmTitle = 'profile_delete_confirm_title';
+  static const String profileDeleteConfirmTitle =
+      'profile_delete_confirm_title';
   static const String profileDeleteConfirmMsg = 'profile_delete_confirm_msg';
   static const String profileDeleteConfirmBtn = 'profile_delete_confirm_btn';
   static const String profileSettings = 'profile_settings';
@@ -265,7 +266,7 @@ class AppLocale {
 
     splashBlessing: 'May you be blessed with a noble Wesak!',
 
-    homeTitle: 'Wesak 2026',
+    homeTitle: 'Dansal Go',
     homeGreeting: 'Happy Wesak!',
     homeSubtitle: 'Explore Dansal, Thorana & more near you',
     homeFindNearby: 'Find Nearby',
@@ -292,14 +293,15 @@ class AppLocale {
     profileNotifications: 'Notifications',
     profileManageAlerts: 'Manage alerts',
     profileAbout: 'About',
-    profileAboutSubtitle: 'Wesak 2026 · v1.0.0',
+    profileAboutSubtitle: 'Dansal Go · v1.0.0',
     profileAdminBadge: 'Administrator',
     profileAdminPanel: 'Admin Panel',
     profileAdminSubtitle: 'Review pending submissions',
     profileSignOut: 'Sign Out',
     profileDeleteAccount: 'Delete Account',
     profileDeleteConfirmTitle: 'Delete Account?',
-    profileDeleteConfirmMsg: 'This will permanently delete your account and all your data. This action cannot be undone.',
+    profileDeleteConfirmMsg:
+        'This will permanently delete your account and all your data. This action cannot be undone.',
     profileDeleteConfirmBtn: 'Delete',
     profileSettings: 'Settings',
     profileAccount: 'Account',
@@ -468,17 +470,17 @@ class AppLocale {
 
     splashBlessing: 'උතුම් වෙසක් මංගල්‍යයක් වේවා',
 
-    homeTitle: 'වෙසක් 2026',
+    homeTitle: 'Dansal Go',
     homeGreeting: 'සුභ වෙසක් !',
     homeSubtitle: 'ළඟම ඇති දන්සල්,තෝරන්,වෙසක් කූඩු සහ වෙසක් කලාප සොයා ගන්න.',
     homeFindNearby: 'ළඟම ඇති ඉසව්',
     homeVerified: 'සනාථ',
     homeBrowseCategory: 'වර්ගය අනුව සොයන්න',
-    homeTapExplore: 'ස්පර්ශ කරන්න',
+    homeTapExplore: 'Touch කරන්න',
     homeSeeAll: 'සියලුම →',
 
     typeDansal: 'දන්සල්',
-    typeThorana: 'තොරණ',
+    typeThorana: 'තොරණ්',
     typeKudu: 'වෙසක් කූඩු',
     typeGeetha: 'භක්ති ගීත',
 
@@ -490,20 +492,21 @@ class AppLocale {
     profileTitle: 'පැතිකඩ',
     profileGuest: 'ආගන්තුක',
     profileGuestSubtitle: 'ඉසව් එකතු කිරීමට හා නිරීක්ෂණය කිරීමට ඇතුළු වන්න',
-    profileSignIn: 'Google ෙකන් ඇතුළු වන්න',
+    profileSignIn: 'Google සමඟ ඉදිරියට යන්න',
     profileLanguage: 'භාෂාව',
     profileNotifications: 'දැනුම්දීම්',
     profileManageAlerts: 'ඇඟවීම් කළමනාකරණය',
     profileAbout: 'යෙදුම පිළිබඳව',
-    profileAboutSubtitle: 'වෙසක් 2026 · v1.0.0',
+    profileAboutSubtitle: 'Dansal Go · v1.0.0',
     profileAdminBadge: 'පරිපාලක',
     profileAdminPanel: 'පරිපාලන කොටස',
     profileAdminSubtitle: 'ලැබෙන ඉදිරිපත් කිරීම් සමාලෝචනය',
     profileSignOut: 'ඉවත් වන්න',
-    profileDeleteAccount: 'ගිණුම මකන්න',
-    profileDeleteConfirmTitle: 'ගිණුම මකන්නද?',
-    profileDeleteConfirmMsg: 'ඔබේ ගිණුම සහ සියලු දත්ත සදහටම මකා දමනු ලැබේ. මෙය undo කළ නොහැක.',
-    profileDeleteConfirmBtn: 'මකන්න',
+    profileDeleteAccount: 'ගිණුම ඉවත් කරන්න',
+    profileDeleteConfirmTitle: 'ගිණුම ඉවත් කරන්නද?',
+    profileDeleteConfirmMsg:
+        'ඔබේ ගිණුම සහ සියලු දත්ත සදහටම මකා දමනු ලැබේ. මෙය undo කළ නොහැක.',
+    profileDeleteConfirmBtn: 'ඉවත් කරන්න',
     profileSettings: 'සැකසීම්',
     profileAccount: 'ගිණුම',
     profileAdmin: 'පරිපාලක',
@@ -521,8 +524,8 @@ class AppLocale {
     searchTryDifferent: '"%a" — වෙනත් වචනයකින් සොයන්න',
 
     listSortBy: 'ක්‍රමය',
-    listSortDefault: 'පෙරනිමි',
-    listSortNearMe: 'ළඟ',
+    listSortDefault: 'සියල්ලම',
+    listSortNearMe: 'ළඟම',
     listSearchPlaceholder: 'නගරය හෝ ඉසව් නාමය සොයන්න...',
     listNoResults: '"%a" සඳහා ප්‍රතිඵල නෑ',
     listCouldNotLoad: 'ඉසව් load කළ නොහැකි විය',

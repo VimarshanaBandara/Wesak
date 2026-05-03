@@ -61,7 +61,7 @@ class _WesakAppState extends State<WesakApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Wesak',
+      title: 'Dansal Go',
       debugShowCheckedModeBanner: false,
       // Localization delegates + supported locales
       supportedLocales: FlutterLocalization.instance.supportedLocales,
