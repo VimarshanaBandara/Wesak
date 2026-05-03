@@ -140,7 +140,9 @@ class _MapScreenState extends State<MapScreen> {
                   child: Card(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                       child: Text(
                         AppLocale.mapNoEvents.getString(context),
                         textAlign: TextAlign.center,
@@ -163,12 +165,14 @@ class _MapScreenState extends State<MapScreen> {
               : events.where((e) => e.type == _filterType).toList();
 
           final markers = filtered
-              .map((e) => EventMarker(
-                    id: e.id,
-                    title: e.name,
-                    type: e.type,
-                    position: LatLng(e.lat, e.lng),
-                  ))
+              .map(
+                (e) => EventMarker(
+                  id: e.id,
+                  title: e.name,
+                  type: e.type,
+                  position: LatLng(e.lat, e.lng),
+                ),
+              )
               .toList();
 
           return Stack(
@@ -210,12 +214,18 @@ class _MapScreenState extends State<MapScreen> {
                         onSubmitted: _searchLocation,
                         style: const TextStyle(fontSize: 14),
                         decoration: InputDecoration(
-                          hintText: AppLocale.mapSearchPlaceholder
-                              .getString(context),
+                          hintText: AppLocale.mapSearchPlaceholder.getString(
+                            context,
+                          ),
                           hintStyle: TextStyle(
-                              fontSize: 13, color: Colors.grey[400]),
-                          prefixIcon: const Icon(Icons.search,
-                              size: 20, color: Color(0xFF1A0533)),
+                            fontSize: 13,
+                            color: Colors.grey[400],
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            size: 20,
+                            color: Color(0xFF1A0533),
+                          ),
                           suffixIcon: _searching
                               ? const Padding(
                                   padding: EdgeInsets.all(12),
@@ -223,24 +233,28 @@ class _MapScreenState extends State<MapScreen> {
                                     width: 16,
                                     height: 16,
                                     child: CircularProgressIndicator(
-                                        strokeWidth: 2),
+                                      strokeWidth: 2,
+                                    ),
                                   ),
                                 )
                               : _searchController.text.isNotEmpty
-                                  ? GestureDetector(
-                                      onTap: () {
-                                        _searchController.clear();
-                                        setState(
-                                            () => _searchError = null);
-                                      },
-                                      child: Icon(Icons.close,
-                                          size: 18,
-                                          color: Colors.grey[400]),
-                                    )
-                                  : null,
+                              ? GestureDetector(
+                                  onTap: () {
+                                    _searchController.clear();
+                                    setState(() => _searchError = null);
+                                  },
+                                  child: Icon(
+                                    Icons.close,
+                                    size: 18,
+                                    color: Colors.grey[400],
+                                  ),
+                                )
+                              : null,
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 13),
+                            horizontal: 14,
+                            vertical: 13,
+                          ),
                         ),
                       ),
                     ),
@@ -251,27 +265,35 @@ class _MapScreenState extends State<MapScreen> {
                         padding: const EdgeInsets.only(top: 6),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.red.shade50,
                             borderRadius: BorderRadius.circular(10),
-                            border:
-                                Border.all(color: Colors.red.shade200),
+                            border: Border.all(color: Colors.red.shade200),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.error_outline,
-                                  size: 14, color: Colors.red),
+                              const Icon(
+                                Icons.error_outline,
+                                size: 14,
+                                color: Colors.red,
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 _searchError == 'not_found'
-                                    ? AppLocale.mapLocationNotFound
-                                        .getString(context)
-                                    : AppLocale.mapSearchFailed
-                                        .getString(context),
+                                    ? AppLocale.mapLocationNotFound.getString(
+                                        context,
+                                      )
+                                    : AppLocale.mapSearchFailed.getString(
+                                        context,
+                                      ),
                                 style: const TextStyle(
-                                    fontSize: 12, color: Colors.red),
+                                  fontSize: 12,
+                                  color: Colors.red,
+                                ),
                               ),
                             ],
                           ),
@@ -286,33 +308,29 @@ class _MapScreenState extends State<MapScreen> {
                       child: Row(
                         children: [
                           _buildFilterChip(
-                            label: AppLocale.mapFilterAll
-                                .getString(context),
+                            label: AppLocale.mapFilterAll.getString(context),
                             icon: Icons.apps,
                             color: const Color(0xFF1A0533),
                             selected: _filterType == null,
                             count: events.length,
-                            onTap: () =>
-                                setState(() => _filterType = null),
+                            onTap: () => setState(() => _filterType = null),
                           ),
                           const SizedBox(width: 6),
-                          ...['dansal', 'thorana', 'kudu', 'geetha']
-                              .map((type) => Padding(
-                                    padding:
-                                        const EdgeInsets.only(right: 6),
-                                    child: _buildFilterChip(
-                                      label: AppLocale.typeLabel(
-                                          context, type),
-                                      icon: _typeIcons[type]!,
-                                      color: _typeColors[type]!,
-                                      selected: _filterType == type,
-                                      count: events
-                                          .where((e) => e.type == type)
-                                          .length,
-                                      onTap: () => setState(
-                                          () => _filterType = type),
-                                    ),
-                                  )),
+                          ...['dansal', 'thorana', 'kudu', 'geetha'].map(
+                            (type) => Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: _buildFilterChip(
+                                label: AppLocale.typeLabel(context, type),
+                                icon: _typeIcons[type]!,
+                                color: _typeColors[type]!,
+                                selected: _filterType == type,
+                                count: events
+                                    .where((e) => e.type == type)
+                                    .length,
+                                onTap: () => setState(() => _filterType = type),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -321,11 +339,7 @@ class _MapScreenState extends State<MapScreen> {
               ),
 
               // Legend - bottom left
-              Positioned(
-                bottom: 16,
-                left: 16,
-                child: _MapLegend(),
-              ),
+              Positioned(bottom: 16, left: 16, child: _MapLegend()),
 
               // My Location button - bottom right
               Positioned(
@@ -363,8 +377,9 @@ class _MapScreenState extends State<MapScreen> {
       }
 
       final pos = await Geolocator.getCurrentPosition(
-        locationSettings:
-            const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
       _lastPosition = pos;
       _cameraController?.move(LatLng(pos.latitude, pos.longitude), 14.0);
@@ -426,10 +441,8 @@ class _MapScreenState extends State<MapScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => _EventPreviewSheet(
-        event: event,
-        userPosition: _lastPosition,
-      ),
+      builder: (_) =>
+          _EventPreviewSheet(event: event, userPosition: _lastPosition),
     );
   }
 
@@ -445,14 +458,15 @@ class _MapScreenState extends State<MapScreen> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? color : Colors.white,
+          color: selected
+              ? color
+              : const Color(0xFF1A0533).withValues(alpha: 0.82),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
+              color: Colors.black.withValues(alpha: 0.25),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -461,34 +475,32 @@ class _MapScreenState extends State<MapScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon,
-                size: 14, color: selected ? Colors.white : color),
+            Icon(icon, size: 14, color: selected ? Colors.white : color),
             const SizedBox(width: 5),
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: selected ? Colors.white : Colors.grey[700],
+                color: Colors.white,
               ),
             ),
             if (count != null) ...[
               const SizedBox(width: 5),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                 decoration: BoxDecoration(
                   color: selected
                       ? Colors.white.withValues(alpha: 0.25)
-                      : color.withValues(alpha: 0.12),
+                      : color.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   '$count',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: selected ? Colors.white : color,
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -506,61 +518,68 @@ class _MapLegend extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = [
       _LegendItem(
-          color: const Color(0xFFE65100),
-          icon: Icons.restaurant,
-          label: AppLocale.typeDansal.getString(context)),
+        color: const Color(0xFFE65100),
+        icon: Icons.restaurant,
+        label: AppLocale.typeDansal.getString(context),
+      ),
       _LegendItem(
-          color: const Color(0xFF6A1B9A),
-          icon: Icons.account_balance,
-          label: AppLocale.typeThorana.getString(context)),
+        color: const Color(0xFF6A1B9A),
+        icon: Icons.account_balance,
+        label: AppLocale.typeThorana.getString(context),
+      ),
       _LegendItem(
-          color: const Color(0xFFF9A825),
-          icon: Icons.wb_sunny,
-          label: AppLocale.typeKudu.getString(context)),
+        color: const Color(0xFFF9A825),
+        icon: Icons.wb_sunny,
+        label: AppLocale.typeKudu.getString(context),
+      ),
       _LegendItem(
-          color: const Color(0xFF1565C0),
-          icon: Icons.music_note,
-          label: AppLocale.legendGeetha.getString(context)),
+        color: const Color(0xFF1565C0),
+        icon: Icons.music_note,
+        label: AppLocale.legendGeetha.getString(context),
+      ),
     ];
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.92),
+        color: const Color(0xFF1A0533).withValues(alpha: 0.82),
         borderRadius: BorderRadius.circular(10),
         boxShadow: const [
-          BoxShadow(
-              color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
+          BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 2)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: items
-            .map((item) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 3),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: item.color,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(item.icon,
-                            color: Colors.white, size: 13),
+            .map(
+              (item) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: item.color,
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(width: 7),
-                      Text(
-                        item.label,
-                        style: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w500),
+                      child: Icon(item.icon, color: Colors.white, size: 13),
+                    ),
+                    const SizedBox(width: 7),
+                    Text(
+                      item.label,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
                       ),
-                    ],
-                  ),
-                ))
+                    ),
+                  ],
+                ),
+              ),
+            )
             .toList(),
       ),
     );
@@ -572,8 +591,11 @@ class _LegendItem {
   final IconData icon;
   final String label;
 
-  const _LegendItem(
-      {required this.color, required this.icon, required this.label});
+  const _LegendItem({
+    required this.color,
+    required this.icon,
+    required this.label,
+  });
 }
 
 // ── Event preview bottom sheet ─────────────────────────────────────────────
@@ -620,11 +642,13 @@ class _EventPreviewSheet extends StatelessWidget {
       event.lng,
     );
     if (meters < 1000) {
-      return context.formatString(
-          AppLocale.commonMaway, [meters.round().toString()]);
+      return context.formatString(AppLocale.commonMaway, [
+        meters.round().toString(),
+      ]);
     }
-    return context.formatString(
-        AppLocale.commonKmaway, [(meters / 1000).toStringAsFixed(1)]);
+    return context.formatString(AppLocale.commonKmaway, [
+      (meters / 1000).toStringAsFixed(1),
+    ]);
   }
 
   Future<void> _openDirections() async {
@@ -636,7 +660,8 @@ class _EventPreviewSheet extends StatelessWidget {
     } else {
       await launchUrl(
         Uri.parse(
-            'https://www.google.com/maps/search/?api=1&query=${event.lat},${event.lng}'),
+          'https://www.google.com/maps/search/?api=1&query=${event.lat},${event.lng}',
+        ),
         mode: LaunchMode.externalApplication,
       );
     }
@@ -690,8 +715,7 @@ class _EventPreviewSheet extends StatelessWidget {
                           ),
                           borderRadius: BorderRadius.circular(13),
                         ),
-                        child:
-                            Icon(typeIcon, color: Colors.white, size: 22),
+                        child: Icon(typeIcon, color: Colors.white, size: 22),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -701,7 +725,9 @@ class _EventPreviewSheet extends StatelessWidget {
                             // Type label
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
                                 color: typeColor.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
@@ -733,16 +759,19 @@ class _EventPreviewSheet extends StatelessWidget {
                                 child: Row(
                                   children: [
                                     if (event.city.isNotEmpty) ...[
-                                      Icon(Icons.location_on_rounded,
-                                          size: 11,
-                                          color: Colors.grey[500]),
+                                      Icon(
+                                        Icons.location_on_rounded,
+                                        size: 11,
+                                        color: Colors.grey[500],
+                                      ),
                                       const SizedBox(width: 2),
                                       Flexible(
                                         child: Text(
                                           event.city,
                                           style: TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.grey[600]),
+                                            fontSize: 11,
+                                            color: Colors.grey[600],
+                                          ),
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
@@ -758,8 +787,11 @@ class _EventPreviewSheet extends StatelessWidget {
                                         ),
                                       ),
                                       const SizedBox(width: 6),
-                                      Icon(Icons.near_me_rounded,
-                                          size: 11, color: typeColor),
+                                      Icon(
+                                        Icons.near_me_rounded,
+                                        size: 11,
+                                        color: typeColor,
+                                      ),
                                       const SizedBox(width: 2),
                                       Text(
                                         distance,
@@ -778,8 +810,11 @@ class _EventPreviewSheet extends StatelessWidget {
                       ),
                       if (event.verified) ...[
                         const SizedBox(width: 6),
-                        Icon(Icons.verified_rounded,
-                            color: Colors.green.shade600, size: 18),
+                        Icon(
+                          Icons.verified_rounded,
+                          color: Colors.green.shade600,
+                          size: 18,
+                        ),
                       ],
                     ],
                   ),
@@ -796,14 +831,14 @@ class _EventPreviewSheet extends StatelessWidget {
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => _FullScreenPhotoViewer(
-                                  url: event.photos[i]),
+                              builder: (_) =>
+                                  _FullScreenPhotoViewer(url: event.photos[i]),
                             ),
                           ),
                           child: Padding(
                             padding: EdgeInsets.only(
-                                right:
-                                    i < event.photos.length - 1 ? 8 : 0),
+                              right: i < event.photos.length - 1 ? 8 : 0,
+                            ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(10),
                               child: Image.network(
@@ -819,15 +854,19 @@ class _EventPreviewSheet extends StatelessWidget {
                                         color: Colors.grey[100],
                                         child: const Center(
                                           child: CircularProgressIndicator(
-                                              strokeWidth: 2),
+                                            strokeWidth: 2,
+                                          ),
                                         ),
                                       ),
                                 errorBuilder: (_, _, _) => Container(
                                   width: 78,
                                   height: 78,
                                   color: Colors.grey[200],
-                                  child: const Icon(Icons.broken_image,
-                                      color: Colors.grey, size: 22),
+                                  child: const Icon(
+                                    Icons.broken_image,
+                                    color: Colors.grey,
+                                    size: 22,
+                                  ),
                                 ),
                               ),
                             ),
@@ -846,21 +885,23 @@ class _EventPreviewSheet extends StatelessWidget {
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: _openDirections,
-                          icon: const Icon(Icons.directions_rounded,
-                              size: 15),
-                          label: Text(AppLocale.detailGetDirections
-                              .getString(context)),
+                          icon: const Icon(Icons.directions_rounded, size: 15),
+                          label: Text(
+                            AppLocale.detailGetDirections.getString(context),
+                          ),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: typeColor,
                             side: BorderSide(
-                                color: typeColor.withValues(alpha: 0.4)),
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 11),
+                              color: typeColor.withValues(alpha: 0.4),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
                             textStyle: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(11)),
+                              borderRadius: BorderRadius.circular(11),
+                            ),
                           ),
                         ),
                       ),
@@ -872,25 +913,27 @@ class _EventPreviewSheet extends StatelessWidget {
                           onPressed: () {
                             final nav = Navigator.of(context);
                             nav.pop();
-                            nav.push(MaterialPageRoute(
-                              builder: (_) =>
-                                  EventDetailScreen(event: event),
-                            ));
+                            nav.push(
+                              MaterialPageRoute(
+                                builder: (_) => EventDetailScreen(event: event),
+                              ),
+                            );
                           },
-                          icon: const Icon(Icons.open_in_new_rounded,
-                              size: 15),
+                          icon: const Icon(Icons.open_in_new_rounded, size: 15),
                           label: Text(
-                              AppLocale.mapViewDetails.getString(context)),
+                            AppLocale.mapViewDetails.getString(context),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: typeColor,
                             foregroundColor: Colors.white,
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 11),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
                             textStyle: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(11)),
+                              borderRadius: BorderRadius.circular(11),
+                            ),
                             elevation: 0,
                           ),
                         ),
@@ -933,10 +976,12 @@ class _FullScreenPhotoViewer extends StatelessWidget {
                 ? child
                 : const Center(
                     child: CircularProgressIndicator(
-                        color: Colors.white, strokeWidth: 2),
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
                   ),
-            errorBuilder: (_, _, _) => const Icon(Icons.broken_image,
-                color: Colors.white, size: 48),
+            errorBuilder: (_, _, _) =>
+                const Icon(Icons.broken_image, color: Colors.white, size: 48),
           ),
         ),
       ),
