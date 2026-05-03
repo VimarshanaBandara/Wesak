@@ -30,7 +30,9 @@ class _MapScreenState extends State<MapScreen> {
   // Provider ගෙන් onMapReady callback ෙකදී set වෙනවා
   MapCameraController? _cameraController;
 
-  late final Stream<List<EventModel>> _eventsStream;
+  List<EventModel> _events = [];
+  bool _eventsLoading = true;
+  String? _eventsError;
 
   String? _filterType;
   bool _searching = false;
@@ -56,8 +58,21 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
-    _eventsStream = _firestoreService.getVerifiedEventsStream();
+    _loadEvents();
     _searchController.addListener(() => setState(() {}));
+  }
+
+  Future<void> _loadEvents() async {
+    setState(() {
+      _eventsLoading = true;
+      _eventsError = null;
+    });
+    try {
+      final events = await _firestoreService.getVerifiedEvents();
+      if (mounted) setState(() { _events = events; _eventsLoading = false; });
+    } catch (e) {
+      if (mounted) setState(() { _eventsError = '$e'; _eventsLoading = false; });
+    }
   }
 
   @override
@@ -110,19 +125,33 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: WesakAppBar(title: AppLocale.mapTitle.getString(context)),
-      body: StreamBuilder<List<EventModel>>(
-        stream: _eventsStream,
-        builder: (_, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      appBar: WesakAppBar(
+        title: AppLocale.mapTitle.getString(context),
+        actions: [
+          IconButton(
+            icon: _eventsLoading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
+                  )
+                : const Icon(Icons.refresh_rounded, color: Colors.white),
+            onPressed: _eventsLoading ? null : _loadEvents,
+          ),
+        ],
+      ),
+      body: Builder(
+        builder: (context) {
+          if (_eventsLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+          if (_eventsError != null) {
+            return Center(child: Text('Error: $_eventsError'));
           }
 
-          final events = snapshot.data ?? [];
+          final events = _events;
 
           if (events.isEmpty) {
             return Stack(

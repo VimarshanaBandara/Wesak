@@ -19,7 +19,8 @@ class NearbyScreen extends StatefulWidget {
 
 class _NearbyScreenState extends State<NearbyScreen> {
   final _firestoreService = FirestoreService();
-  late final Stream<List<EventModel>> _stream;
+  List<EventModel> _events = [];
+  bool _eventsLoading = true;
 
   Position? _userPosition;
   bool _loadingGps = true;
@@ -32,8 +33,18 @@ class _NearbyScreenState extends State<NearbyScreen> {
   @override
   void initState() {
     super.initState();
-    _stream = _firestoreService.getVerifiedEventsStream();
+    _loadEvents();
     _fetchLocation();
+  }
+
+  Future<void> _loadEvents() async {
+    setState(() => _eventsLoading = true);
+    try {
+      final events = await _firestoreService.getVerifiedEvents();
+      if (mounted) setState(() { _events = events; _eventsLoading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _eventsLoading = false);
+    }
   }
 
   Future<void> _fetchLocation() async {
@@ -275,14 +286,13 @@ class _NearbyScreenState extends State<NearbyScreen> {
     }
 
     // Events list
-    return StreamBuilder<List<EventModel>>(
-      stream: _stream,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+    return Builder(
+      builder: (context) {
+        if (_eventsLoading) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final all = snapshot.data ?? [];
+        final all = _events;
 
         final withDist = all
             .map((e) => (event: e, dist: _distanceTo(e)))

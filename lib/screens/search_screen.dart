@@ -17,7 +17,8 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final _firestoreService = FirestoreService();
-  late final Stream<List<EventModel>> _stream;
+  List<EventModel> _events = [];
+  bool _eventsLoading = true;
 
   final _searchController = TextEditingController();
   String _query = '';
@@ -42,7 +43,17 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    _stream = _firestoreService.getVerifiedEventsStream();
+    _loadEvents();
+  }
+
+  Future<void> _loadEvents() async {
+    setState(() => _eventsLoading = true);
+    try {
+      final events = await _firestoreService.getVerifiedEvents();
+      if (mounted) setState(() { _events = events; _eventsLoading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _eventsLoading = false);
+    }
   }
 
   @override
@@ -144,16 +155,13 @@ class _SearchScreenState extends State<SearchScreen> {
 
           // ── Results ──────────────────────────────────────────────────
           Expanded(
-            child: StreamBuilder<List<EventModel>>(
-              stream: _stream,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
-                  return const Center(
-                      child: CircularProgressIndicator());
+            child: Builder(
+              builder: (context) {
+                if (_eventsLoading) {
+                  return const Center(child: CircularProgressIndicator());
                 }
 
-                final all = snapshot.data ?? [];
+                final all = _events;
                 final filtered = _filter(all);
 
                 if (_query.isEmpty && _selectedType == null) {

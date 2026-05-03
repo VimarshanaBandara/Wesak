@@ -170,7 +170,7 @@ class _SplashScreenState extends State<SplashScreen>
                         child: FadeTransition(opacity: _fadeAnim, child: child),
                       ),
                       child: const Text(
-                        'WESAK',
+                        'Dansal GO',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,

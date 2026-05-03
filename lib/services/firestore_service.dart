@@ -93,6 +93,14 @@ class FirestoreService {
     });
   }
 
+  /// Map screen ට — one-time fetch, real-time stream නෑ (cost reduce)
+  Future<List<EventModel>> getVerifiedEvents() async {
+    final snap = await _events.where('verified', isEqualTo: true).get();
+    final list = snap.docs.map((doc) => EventModel.fromFirestore(doc)).toList();
+    list.sort((a, b) => a.startTime.compareTo(b.startTime));
+    return list;
+  }
+
   /// User submit කළ event Firestore ට save කරනවා
   /// status: 'pending', verified: false — admin approval ට wait
   Future<void> addEvent(EventModel event) async {
